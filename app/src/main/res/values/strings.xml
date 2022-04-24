@@ -1,0 +1,13 @@
+<resources>
+    <string name="app_name">Pokedexino</string>
+
+    <string name="settings">Settings</string>
+
+    <string name="log_in">Log in</string>
+    <string name="log_out">Log out</string>
+    <string name="aborted_login_with_google">Log-in with Google aborted</string>
+    <string name="firestore_error">Impossible to reach Firebase or Firestore…</string>
+
+    <!-- A11y -->
+    <string name="a11y_add_to_favorites">Add %s to favorites</string>
+</resources>

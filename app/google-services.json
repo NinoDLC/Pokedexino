@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "636608393930",
+    "project_id": "pokedexino",
+    "storage_bucket": "pokedexino.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:636608393930:android:d680cb9181134c32ed7a33",
+        "android_client_info": {
+          "package_name": "fr.delcey.pokedexino"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "636608393930-07gle83hl7nq69lovdnft5b4ng0o1dm6.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "fr.delcey.pokedexino",
+            "certificate_hash": "788b611e2466f0e16755fd1a97118cbef1d88a81"
+          }
+        },
+        {
+          "client_id": "636608393930-irfd4qq0dm9gjjlolugppq4dq3jh283o.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDDHyqdR7lKyP2lMGSS5oQxO30VGvg-9mk"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "636608393930-irfd4qq0dm9gjjlolugppq4dq3jh283o.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
