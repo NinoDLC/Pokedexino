@@ -21,6 +21,7 @@ class PokemonsFragment : Fragment(R.layout.pokemons_fragment) {
 
         val adapter = PokemonsAdapter()
         binding.pokemonsRecyclerView.adapter = adapter
+        binding.pokemonsRecyclerView.itemAnimator = null
 
         viewModel.viewStateLiveData.observe(viewLifecycleOwner) { state ->
             adapter.submitList(state.items)

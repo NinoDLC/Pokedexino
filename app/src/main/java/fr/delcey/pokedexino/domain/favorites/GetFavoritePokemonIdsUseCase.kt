@@ -1,32 +1,33 @@
 package fr.delcey.pokedexino.domain.favorites
 
-import fr.delcey.pokedexino.data.user.InterpolatedLikedPokemonRepository
+import fr.delcey.pokedexino.data.user.InterpolatedFavoritePokemonRepository
 import fr.delcey.pokedexino.data.user.UserRepository
 import fr.delcey.pokedexino.domain.user.GetLoggedUserUseCase
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.*
 import javax.inject.Inject
 
 class GetFavoritePokemonIdsUseCase @Inject constructor(
     private val getLoggedUserUseCase: GetLoggedUserUseCase,
     private val userRepository: UserRepository,
-    private val interpolatedLikedPokemonRepository: InterpolatedLikedPokemonRepository,
+    private val interpolatedFavoritePokemonRepository: InterpolatedFavoritePokemonRepository,
 ) {
-    operator fun invoke(): Flow<List<String>> = getLoggedUserUseCase()
+    operator fun invoke(): Flow<Collection<String>> = getLoggedUserUseCase()
         .flatMapLatest { firebaseUser ->
             if (firebaseUser == null) {
                 flowOf(emptyList())
             } else {
                 combine(
                     userRepository.getFavoritePokemonIds(firebaseUser.uid),
-                    interpolatedLikedPokemonRepository.interpolatedLikedPokemonIdsFlow
+                    interpolatedFavoritePokemonRepository.interpolatedFavoritePokemonIdsFlow
                 ) { pokemonIds, interpolatedLikedPokemonIds ->
-                    pokemonIds.filter { // TODO NINO
-                        interpolatedLikedPokemonIds[it] == false
-                    }
+                    pokemonIds.filter {
+                        // Keep null (not interpolated) or true (interpolated to favorite)
+                        interpolatedLikedPokemonIds[it] != false
+                    }.plus(
+                        // Add interpolated (not present yet in backend)
+                        interpolatedLikedPokemonIds.filter { it.value }.map { it.key }
+                    ).toSet() // To avoid duplicates
                 }
             }
-        }
+        }.distinctUntilChanged()
 }

@@ -1,7 +1,6 @@
 package fr.delcey.pokedexino.data.user
 
 import com.google.firebase.firestore.ktx.toObject
-import com.google.firebase.firestore.ktx.toObjects
 import fr.delcey.pokedexino.data.FirebaseNodeResolver
 import fr.delcey.pokedexino.domain.user.entity.UserEntity
 import fr.delcey.pokedexino.ui.utils.loge
@@ -18,6 +17,10 @@ import javax.inject.Singleton
 class UserRepository @Inject constructor(
     private val firebaseNodeResolver: FirebaseNodeResolver,
 ) {
+
+    companion object {
+        private val EMPTY_DOCUMENT = hashMapOf<Any, Any>()
+    }
 
     fun getUser(userId: String): Flow<UserResponse.Down> = callbackFlow {
         val listener = firebaseNodeResolver.getUserDocument(userId)
@@ -54,21 +57,30 @@ class UserRepository @Inject constructor(
     }
 
     fun getFavoritePokemonIds(userId: String): Flow<List<String>> = callbackFlow {
-        val listener = firebaseNodeResolver.getLikedPokemonsCollection(userId)
+        val listener = firebaseNodeResolver.getFavoritePokemonsCollection(userId)
             .addSnapshotListener { value, error ->
-                val result: List<String>? = try {
-                    value?.toObjects()
-                } catch (e: Exception) {
-                    loge(e)
-                    null
-                }
+                val favoritePokemonIds = value?.documents?.map { it.id }
 
                 if (error != null) {
                     loge(error)
                 }
 
-                trySendBlocking(result ?: emptyList())
+                trySendBlocking(favoritePokemonIds ?: emptyList())
             }
         awaitClose { listener.remove() }
     }.conflate()
+
+    suspend fun setPokemonFavorite(userId: String, pokemonId: String, isFavorite: Boolean) {
+        if (isFavorite) {
+            firebaseNodeResolver.getFavoritePokemonsCollection(userId)
+                .document(pokemonId)
+                .set(EMPTY_DOCUMENT)
+                .await()
+        } else {
+            firebaseNodeResolver.getFavoritePokemonsCollection(userId)
+                .document(pokemonId)
+                .delete()
+                .await()
+        }
+    }
 }

@@ -17,7 +17,8 @@ data class PokemonsViewState(
             val pokemonName: String,
             val pokemonImageUrl: String,
             @DrawableRes
-            val starResourceDrawable: Int,
+            val favoriteResourceDrawable: Int,
+            val isFavoriteEnabled: Boolean,
             val onCardClicked: EquatableCallback,
             val onFavoriteButtonClicked: EquatableCallback,
         ) : Item(Type.CONTENT)

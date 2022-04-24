@@ -10,14 +10,14 @@ class FirebaseNodeResolver @Inject constructor(
 ) {
     companion object {
         private const val COLLECTION_PATH_USERS = "users"
-        private const val COLLECTION_PATH_LIKED_POKEMON = "liked_pokemons"
+        private const val COLLECTION_PATH_FAVORITE_POKEMONS = "favorite_pokemons"
     }
 
     fun getUsersCollection() = firebaseFirestore.collection(COLLECTION_PATH_USERS)
 
     fun getUserDocument(userId: String) = firebaseFirestore.document("$COLLECTION_PATH_USERS/$userId")
 
-    fun getLikedPokemonsCollection(userId: String) = firebaseFirestore.collection(
-        "$COLLECTION_PATH_USERS/$userId/$COLLECTION_PATH_LIKED_POKEMON"
+    fun getFavoritePokemonsCollection(userId: String) = firebaseFirestore.collection(
+        "$COLLECTION_PATH_USERS/$userId/$COLLECTION_PATH_FAVORITE_POKEMONS"
     )
 }

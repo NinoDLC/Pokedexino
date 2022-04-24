@@ -9,6 +9,7 @@ import com.bumptech.glide.Glide
 import fr.delcey.pokedexino.databinding.PokemonsItemBinding
 import fr.delcey.pokedexino.databinding.PokemonsItemLoadingBinding
 import fr.delcey.pokedexino.ui.utils.exhaustive
+import fr.delcey.pokedexino.ui.utils.logd
 
 class PokemonsAdapter : ListAdapter<PokemonsViewState.Item, RecyclerView.ViewHolder>(PokemonDiffUtil) {
 
@@ -46,7 +47,8 @@ class PokemonsAdapter : ListAdapter<PokemonsViewState.Item, RecyclerView.ViewHol
 
             binding.pokemonsItemTextViewName.text = viewState.pokemonName
 
-            binding.pokemonsItemImageViewFavorite.setImageResource(viewState.starResourceDrawable)
+            binding.pokemonsItemImageViewFavorite.setImageResource(viewState.favoriteResourceDrawable)
+            binding.pokemonsItemImageViewFavorite.isEnabled = viewState.isFavoriteEnabled
             binding.pokemonsItemImageViewFavorite.setOnClickListener {
                 viewState.onFavoriteButtonClicked()
             }
