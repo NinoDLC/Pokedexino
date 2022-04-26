@@ -14,11 +14,12 @@ import fr.delcey.pokedexino.domain.favorites.UpdateIsPokemonFavoriteUseCase
 import fr.delcey.pokedexino.domain.pokemons.GetPagedPokemonsUseCase
 import fr.delcey.pokedexino.domain.user.GetCurrentUserUseCase
 import fr.delcey.pokedexino.ui.utils.EquatableCallback
+import fr.delcey.pokedexino.ui.utils.SingleLiveEvent
 import fr.delcey.pokedexino.ui.utils.capitalized
 import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
-import java.util.*
+import kotlinx.coroutines.withContext
 import javax.inject.Inject
 
 @HiltViewModel
@@ -37,7 +38,14 @@ class PokemonsViewModel @Inject constructor(
             getPagedPokemonsUseCase.get(),
             getFavoritePokemonIdsUseCase()
         ) { currentUser, pagedPokemons, favoritePokemonIds ->
-            val items = pagedPokemons.map { pokemonEntity ->
+            if (pagedPokemons.hasFailed) {
+                withContext(coroutineDispatcherProvider.main) {
+                    viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error))
+                }
+                return@combine
+            }
+
+            val items = pagedPokemons.pokemons.map { pokemonEntity ->
                 val isFavorite = favoritePokemonIds.any { it == pokemonEntity.id }
 
                 PokemonsViewState.Item.Content(
@@ -67,18 +75,24 @@ class PokemonsViewModel @Inject constructor(
             if (items.isNotEmpty()) {
                 emit(
                     PokemonsViewState(
-                        items + PokemonsViewState.Item.Loading(
-                            onDisplayed = EquatableCallback {
-                                viewModelScope.launch(coroutineDispatcherProvider.io) {
-                                    getPagedPokemonsUseCase.loadNextPage()
+                        items = if (pagedPokemons.hasMoreData) {
+                            items + PokemonsViewState.Item.Loading(
+                                onDisplayed = EquatableCallback {
+                                    viewModelScope.launch(coroutineDispatcherProvider.io) {
+                                        getPagedPokemonsUseCase.loadNextPage()
+                                    }
                                 }
-                            }
-                        )
+                            )
+                        } else {
+                            items
+                        }
                     )
                 )
             }
         }.collect()
     }
+
+    val viewActionEvents = SingleLiveEvent<PokemonsViewAction>()
 
     init {
         viewModelScope.launch(coroutineDispatcherProvider.io) {

@@ -14,5 +14,5 @@ interface PokeApi {
     suspend fun getPagedPokemons(
         @Query("offset") offset: Int,
         @Query("limit") limit: Int,
-    ): PokemonListResponse?
+    ): PokemonListResponse
 }

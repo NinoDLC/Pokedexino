@@ -70,8 +70,7 @@ class PokemonsAdapter : ListAdapter<PokemonsViewState.Item, RecyclerView.ViewHol
 
     object PokemonDiffUtil : DiffUtil.ItemCallback<PokemonsViewState.Item>() {
         override fun areItemsTheSame(oldItem: PokemonsViewState.Item, newItem: PokemonsViewState.Item) =
-            oldItem is PokemonsViewState.Item.Loading && newItem is PokemonsViewState.Item.Loading
-                || oldItem is PokemonsViewState.Item.Content
+            oldItem is PokemonsViewState.Item.Content
                 && newItem is PokemonsViewState.Item.Content
                 && oldItem.pokemonId == newItem.pokemonId
 

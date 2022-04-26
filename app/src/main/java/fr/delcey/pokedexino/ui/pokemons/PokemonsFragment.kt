@@ -2,9 +2,9 @@ package fr.delcey.pokedexino.ui.pokemons
 
 import android.os.Bundle
 import android.view.View
+import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
-import androidx.lifecycle.ViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import fr.delcey.pokedexino.R
 import fr.delcey.pokedexino.databinding.PokemonsFragmentBinding
@@ -25,6 +25,12 @@ class PokemonsFragment : Fragment(R.layout.pokemons_fragment) {
 
         viewModel.viewStateLiveData.observe(viewLifecycleOwner) { state ->
             adapter.submitList(state.items)
+        }
+
+        viewModel.viewActionEvents.observe(viewLifecycleOwner) { action ->
+            when (action) {
+                is PokemonsViewAction.Toast -> Toast.makeText(requireContext(), action.message, Toast.LENGTH_LONG).show()
+            }
         }
     }
 }

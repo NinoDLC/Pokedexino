@@ -1,5 +1,6 @@
 package fr.delcey.pokedexino.domain.pokemons
 
+import fr.delcey.pokedexino.domain.ApiResult
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import java.util.concurrent.atomic.AtomicInteger
@@ -13,18 +14,52 @@ class GetPagedPokemonsUseCase @Inject constructor(
         private const val LIMIT = 20
     }
 
-    private val aggregatedPokemonsMutableFlow = MutableStateFlow<List<PokemonEntity>>(emptyList())
+    private val aggregatedPokemonsMutableFlow = MutableStateFlow(
+        PokemonListDto(
+            pokemons = emptyList(),
+            hasMoreData = true,
+            failureState = null,
+        )
+    )
 
     private val offset = AtomicInteger()
 
-    fun get(): Flow<List<PokemonEntity>> = aggregatedPokemonsMutableFlow
+    fun get(): Flow<PokemonListDto> = aggregatedPokemonsMutableFlow
 
     suspend fun loadNextPage() {
-        aggregatedPokemonsMutableFlow.tryEmit(
-            aggregatedPokemonsMutableFlow.value + pokemonRepository.getPagedPokemons(
-                offset = offset.getAndAdd(LIMIT),
-                limit = LIMIT
-            )
+        val result = pokemonRepository.getPagedPokemons(
+            offset = offset.getAndAdd(LIMIT),
+            limit = LIMIT
         )
+
+        val currentFlowValue = aggregatedPokemonsMutableFlow.value
+
+        aggregatedPokemonsMutableFlow.tryEmit(
+            when (result) {
+                is ApiResult.Success -> currentFlowValue.copy(
+                    pokemons = currentFlowValue.pokemons + result.data,
+                    hasMoreData = true,
+                    failureState = null,
+                )
+                is ApiResult.Empty -> currentFlowValue.copy(
+                    failureState = null,
+                    hasMoreData = false,
+                )
+                is ApiResult.Failure -> currentFlowValue.copy( // TODO NINO RETRY ?
+                    failureState = FailureState.RETRYING,
+                )
+            }
+        )
+    }
+
+    data class PokemonListDto(
+        val pokemons: List<PokemonEntity>,
+        val hasMoreData: Boolean,
+        val failureState: FailureState?,
+    )
+
+    enum class FailureState {
+        RETRYING,
+        TOO_MANY_ATTEMPTS
     }
 }

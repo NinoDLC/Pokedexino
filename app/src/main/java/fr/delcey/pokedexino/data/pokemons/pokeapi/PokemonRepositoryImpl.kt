@@ -1,5 +1,6 @@
 package fr.delcey.pokedexino.data.pokemons.pokeapi
 
+import fr.delcey.pokedexino.domain.ApiResult
 import fr.delcey.pokedexino.domain.pokemons.PokemonEntity
 import fr.delcey.pokedexino.domain.pokemons.PokemonRepository
 import kotlinx.coroutines.async
@@ -15,38 +16,52 @@ class PokemonRepositoryImpl @Inject constructor(
         TODO("Not yet implemented")
     }
 
-    override suspend fun getPagedPokemons(offset: Int, limit: Int): List<PokemonEntity> {
-        val pagedPokemonsResponse = pokeApi.getPagedPokemons(offset, limit)
-
-        val pokemonNamesToQuery = pagedPokemonsResponse?.results?.mapNotNull { it.name }
-
-        if (pokemonNamesToQuery.isNullOrEmpty()) {
-            return emptyList()
+    override suspend fun getPagedPokemons(offset: Int, limit: Int): ApiResult<List<PokemonEntity>> {
+        val pagedPokemonsResponse = try {
+            pokeApi.getPagedPokemons(offset, limit)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            return ApiResult.Failure.IoException(e) // TODO NINO IO or SERVER ?
         }
 
-        return supervisorScope {
-            pokemonNamesToQuery.map { pokemonName ->
-                async {
-                    val pokemonResponse = try {
-                        pokeApi.getPokemonByIdOrName(pokemonName)
-                    } catch (e: Exception) {
-                        e.printStackTrace()
-                        null
-                    }
+        val pokemonNamesToQuery = pagedPokemonsResponse.results?.mapNotNull { it.name }
 
-                    if (pokemonResponse?.id != null && pokemonResponse.name != null && pokemonResponse.sprites?.frontDefault != null) {
-                        PokemonEntity(
-                            id = pokemonResponse.id.toString(),
-                            name = pokemonResponse.name,
-                            imageUrl = pokemonResponse.sprites.frontDefault,
-                        )
-                    } else {
-                        null
-                    }
-                }
+        if (pokemonNamesToQuery.isNullOrEmpty()) {
+            return if (pagedPokemonsResponse.results?.isEmpty() == true) {
+                ApiResult.Empty
+            } else {
+                ApiResult.Failure.ApiException(message = "List is not empty but all contained names are!")
             }
-                .awaitAll()
-                .filterNotNull()
+        }
+
+        return try {
+            val pokemons = supervisorScope {
+                pokemonNamesToQuery.map { pokemonName ->
+                    async {
+                        val pokemonResponse = pokeApi.getPokemonByIdOrName(pokemonName)
+
+                        if (pokemonResponse?.id != null && pokemonResponse.name != null && pokemonResponse.sprites?.frontDefault != null) {
+                            PokemonEntity(
+                                id = pokemonResponse.id.toString(),
+                                name = pokemonResponse.name,
+                                imageUrl = pokemonResponse.sprites.frontDefault,
+                            )
+                        } else {
+                            null
+                        }
+                    }
+                }.awaitAll()
+            }
+
+            val nonNull = pokemons.filterNotNull()
+
+            if (nonNull.size == pokemons.size) {
+                ApiResult.Success(nonNull)
+            } else {
+                ApiResult.Failure.ApiException()
+            }
+        } catch (e: Exception) {
+            ApiResult.Failure.ApiException()
         }
     }
 }
