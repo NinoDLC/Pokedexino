@@ -2,7 +2,7 @@ package fr.delcey.pokedexino.domain.user
 
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import fr.delcey.pokedexino.data.user.UserRepository
-import fr.delcey.pokedexino.domain.CRASHLYTICS_CUSTOM_KEY_USER
+import fr.delcey.pokedexino.domain.crashlytics.CRASHLYTICS_CUSTOM_KEY_USER
 import fr.delcey.pokedexino.domain.image_generator.CreateImageFromInitialsUseCase
 import fr.delcey.pokedexino.domain.user.entity.UserEntity
 import kotlinx.coroutines.flow.Flow

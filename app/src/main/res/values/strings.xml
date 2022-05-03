@@ -7,8 +7,8 @@
     <string name="log_out">Log out</string>
     <string name="aborted_login_with_google">Log-in with Google aborted</string>
     <string name="firestore_error">Impossible to reach Firebase or Firestore…</string>
-    <string name="pokemons_query_error_retrying">Error while fetching Pokemons, retrying…</string>
-    <string name="pokemons_query_error">Error while fetching Pokemons, retrying…</string>
+    <string name="pokemons_query_error_io">Error while fetching Pokemons, are you connected to the internet ?</string>
+    <string name="pokemons_query_error_critical">Critical error while fetching Pokemons!</string>
 
     <!-- A11y -->
     <string name="a11y_add_to_favorites">Add %s to favorites</string>

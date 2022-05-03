@@ -1,10 +1,9 @@
 package fr.delcey.pokedexino.domain.favorites
 
-import android.util.Log
-import fr.delcey.pokedexino.CoroutineDispatcherProvider
 import fr.delcey.pokedexino.data.user.InterpolatedFavoritePokemonRepository
 import fr.delcey.pokedexino.data.user.UserRepository
 import fr.delcey.pokedexino.domain.user.GetLoggedUserUseCase
+import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
 import fr.delcey.pokedexino.ui.utils.loge
 import kotlinx.coroutines.*
 import kotlinx.coroutines.flow.filterNotNull
@@ -19,10 +18,9 @@ class UpdateIsPokemonFavoriteUseCase @Inject constructor(
     private val coroutineDispatcherProvider: CoroutineDispatcherProvider,
 ) {
 
-    private val updateQuantityJobs = mutableMapOf<String, Job>()
+    private val updateQuantityJobs = mutableMapOf<Long, Job>()
 
-    suspend operator fun invoke(pokemonId: String, isFavorite: Boolean): Boolean = try {
-        Log.d("Nino", "invoke() called with: pokemonId = $pokemonId, isFavorite = $isFavorite")
+    suspend operator fun invoke(pokemonId: Long, isFavorite: Boolean): Boolean = try {
         withContext(coroutineDispatcherProvider.io) {
             interpolatedFavoritePokemonRepository.put(pokemonId, isFavorite)
 

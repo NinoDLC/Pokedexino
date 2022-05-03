@@ -9,11 +9,11 @@ import com.google.android.gms.common.api.ApiException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.GoogleAuthProvider
 import dagger.hilt.android.lifecycle.HiltViewModel
-import fr.delcey.pokedexino.CoroutineDispatcherProvider
 import fr.delcey.pokedexino.R
 import fr.delcey.pokedexino.domain.user.CreateUserUseCase
 import fr.delcey.pokedexino.domain.user.GetCurrentUserUseCase
 import fr.delcey.pokedexino.domain.user.SignOutUserUseCase
+import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
 import fr.delcey.pokedexino.ui.utils.SingleLiveEvent
 import fr.delcey.pokedexino.ui.utils.combine
 import fr.delcey.pokedexino.ui.utils.loge

@@ -1,43 +1,39 @@
 package fr.delcey.pokedexino.data.user
 
-import android.util.Log
-import fr.delcey.pokedexino.data.GlobalScopeCoroutineScope
+import fr.delcey.pokedexino.domain.GlobalCoroutineScope
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.channels.BufferOverflow
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.launch
-import java.util.concurrent.atomic.AtomicInteger
+import java.util.concurrent.atomic.AtomicLong
 import javax.inject.Inject
 import javax.inject.Singleton
 
 @Singleton
 class InterpolatedFavoritePokemonRepository @Inject constructor(
-    @GlobalScopeCoroutineScope private val globalScope: CoroutineScope,
+    @GlobalCoroutineScope private val globalScope: CoroutineScope,
 ) {
 
-    private val interpolatedFavoritePokemonIdsMutableStateFlow = MutableSharedFlow<MutableMap<String, Pair<Int, Boolean>>>(
+    // PokemonId to (InterpolationId,isPokemonFavorite)
+    private val interpolatedFavoritePokemonIdsMutableStateFlow = MutableSharedFlow<MutableMap<Long, Pair<Long, Boolean>>>(
         replay = 1,
         onBufferOverflow = BufferOverflow.DROP_OLDEST
     ).apply {
         tryEmit(mutableMapOf())
-        onEach {
-            Log.d("Nino", "mutableStateFlow value changed : $it")
-        }
     }
-    val interpolatedFavoritePokemonIdsFlow: Flow<Map<String, Boolean>> =
+    val interpolatedFavoritePokemonIdsFlow: Flow<Map<Long, Boolean>> =
         interpolatedFavoritePokemonIdsMutableStateFlow.map { interpolatedMap ->
             interpolatedMap.mapValues {
                 it.value.second
             }
         }
 
-    private val interpolationId = AtomicInteger()
+    private val interpolationId = AtomicLong()
 
-    fun put(pokemonId: String, isFavorite: Boolean) {
+    fun put(pokemonId: Long, isFavorite: Boolean) {
         // Global scope use because if the scope is killed during the delay, the value will always be interpolated...
         globalScope.launch {
             val currentInterpolationId = interpolationId.getAndIncrement()

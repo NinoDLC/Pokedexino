@@ -8,11 +8,5 @@ import retrofit2.http.Query
 
 interface PokeApi {
     @GET("pokemon/{pokemonId}/")
-    suspend fun getPokemonByIdOrName(@Path("pokemonId") pokemonId: String): PokemonResponse?
-
-    @GET("pokemon")
-    suspend fun getPagedPokemons(
-        @Query("offset") offset: Int,
-        @Query("limit") limit: Int,
-    ): PokemonListResponse
+    suspend fun getPokemonById(@Path("pokemonId") pokemonId: Long): PokemonResponse?
 }

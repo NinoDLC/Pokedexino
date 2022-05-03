@@ -56,10 +56,10 @@ class UserRepository @Inject constructor(
             .await()
     }
 
-    fun getFavoritePokemonIds(userId: String): Flow<List<String>> = callbackFlow {
+    fun getFavoritePokemonIds(userId: String): Flow<List<Long>> = callbackFlow {
         val listener = firebaseNodeResolver.getFavoritePokemonsCollection(userId)
             .addSnapshotListener { value, error ->
-                val favoritePokemonIds = value?.documents?.map { it.id }
+                val favoritePokemonIds = value?.documents?.map { it.id.toLong() }
 
                 if (error != null) {
                     loge(error)
@@ -70,15 +70,15 @@ class UserRepository @Inject constructor(
         awaitClose { listener.remove() }
     }.conflate()
 
-    suspend fun setPokemonFavorite(userId: String, pokemonId: String, isFavorite: Boolean) {
+    suspend fun setPokemonFavorite(userId: String, pokemonId: Long, isFavorite: Boolean) {
         if (isFavorite) {
             firebaseNodeResolver.getFavoritePokemonsCollection(userId)
-                .document(pokemonId)
+                .document(pokemonId.toString())
                 .set(EMPTY_DOCUMENT)
                 .await()
         } else {
             firebaseNodeResolver.getFavoritePokemonsCollection(userId)
-                .document(pokemonId)
+                .document(pokemonId.toString())
                 .delete()
                 .await()
         }

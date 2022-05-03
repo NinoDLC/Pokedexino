@@ -11,10 +11,10 @@ data class PokemonResponse(
     val types: List<TypesItem>? = null,
 
     @field:SerializedName("base_experience")
-    val baseExperience: Int? = null,
+    val baseExperience: Long? = null,
 
     @field:SerializedName("weight")
-    val weight: Int? = null,
+    val weight: Long? = null,
 
     @field:SerializedName("is_default")
     val isDefault: Boolean? = null,
@@ -41,14 +41,14 @@ data class PokemonResponse(
     val name: String? = null,
 
     @field:SerializedName("id")
-    val id: Int? = null,
+    val id: Long? = null,
 
     @field:SerializedName("forms")
     val forms: List<FormsItem>? = null,
 
     @field:SerializedName("height")
-    val height: Int? = null,
+    val height: Long? = null,
 
     @field:SerializedName("order")
-    val order: Int? = null
+    val order: Long? = null
 )

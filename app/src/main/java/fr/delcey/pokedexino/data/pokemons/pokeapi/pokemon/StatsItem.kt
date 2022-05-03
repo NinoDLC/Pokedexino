@@ -8,8 +8,8 @@ data class StatsItem(
     val stat: Stat? = null,
 
     @field:SerializedName("base_stat")
-    val baseStat: Int? = null,
+    val baseStat: Long? = null,
 
     @field:SerializedName("effort")
-    val effort: Int? = null
+    val effort: Long? = null
 )

@@ -5,7 +5,7 @@ import com.google.gson.annotations.SerializedName
 data class VersionGroupDetailsItem(
 
     @field:SerializedName("level_learned_at")
-    val levelLearnedAt: Int? = null,
+    val levelLearnedAt: Long? = null,
 
     @field:SerializedName("version_group")
     val versionGroup: VersionGroup? = null,

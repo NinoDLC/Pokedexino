@@ -13,7 +13,7 @@ data class PokemonsViewState(
         }
 
         data class Content(
-            val pokemonId: String,
+            val pokemonId: Long,
             val pokemonName: String,
             val pokemonImageUrl: String,
             @DrawableRes

@@ -1,5 +1,6 @@
 package fr.delcey.pokedexino.data
 
+import android.app.Application
 import android.content.Context
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.crashlytics.FirebaseCrashlytics
@@ -9,6 +10,7 @@ import dagger.Provides
 import dagger.hilt.InstallIn
 import dagger.hilt.android.qualifiers.ApplicationContext
 import dagger.hilt.components.SingletonComponent
+import fr.delcey.pokedexino.data.pokemons.local.PokemonDao
 import fr.delcey.pokedexino.data.pokemons.pokeapi.PokeApi
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -49,6 +51,14 @@ class DataModule {
 
     @Singleton
     @Provides
+    fun provideAppDatabase(application: Application): AppDatabase = AppDatabase.create(application)
+
+    @Singleton
+    @Provides
+    fun providePokemonDao(appDatabase: AppDatabase): PokemonDao = appDatabase.getPokemonDao()
+
+    @Singleton
+    @Provides
     fun provideFirebaseFirestore(): FirebaseFirestore = FirebaseFirestore.getInstance()
 
     @Singleton
@@ -58,14 +68,4 @@ class DataModule {
     @Singleton
     @Provides
     fun provideFirebaseCrashlytics(): FirebaseCrashlytics = FirebaseCrashlytics.getInstance()
-
-    @DelicateCoroutinesApi
-    @Singleton
-    @Provides
-    @GlobalScopeCoroutineScope
-    fun provideGlobalScopeCoroutineScope(): CoroutineScope = GlobalScope
 }
-
-@Qualifier
-@Retention(AnnotationRetention.BINARY)
-annotation class GlobalScopeCoroutineScope

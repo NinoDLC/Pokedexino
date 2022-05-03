@@ -1,4 +1,4 @@
-package fr.delcey.pokedexino
+package fr.delcey.pokedexino.domain.utils
 
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -9,4 +9,5 @@ import javax.inject.Singleton
 class CoroutineDispatcherProvider @Inject constructor() {
     val main: CoroutineDispatcher = Dispatchers.Main
     val io: CoroutineDispatcher = Dispatchers.IO
+    val default: CoroutineDispatcher = Dispatchers.Default
 }

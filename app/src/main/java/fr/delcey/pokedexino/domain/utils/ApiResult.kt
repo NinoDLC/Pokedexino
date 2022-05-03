@@ -1,4 +1,4 @@
-package fr.delcey.pokedexino.domain
+package fr.delcey.pokedexino.domain.utils
 
 sealed class ApiResult<out D : Any> {
     data class Success<out D : Any>(val data: D) : ApiResult<D>()

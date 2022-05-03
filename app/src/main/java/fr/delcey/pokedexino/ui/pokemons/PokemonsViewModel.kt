@@ -7,12 +7,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.liveData
 import androidx.lifecycle.viewModelScope
 import dagger.hilt.android.lifecycle.HiltViewModel
-import fr.delcey.pokedexino.CoroutineDispatcherProvider
 import fr.delcey.pokedexino.R
 import fr.delcey.pokedexino.domain.favorites.GetFavoritePokemonIdsUseCase
 import fr.delcey.pokedexino.domain.favorites.UpdateIsPokemonFavoriteUseCase
 import fr.delcey.pokedexino.domain.pokemons.GetPagedPokemonsUseCase
+import fr.delcey.pokedexino.domain.pokemons.GetPagedPokemonsUseCase.FailureState.*
 import fr.delcey.pokedexino.domain.user.GetCurrentUserUseCase
+import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
 import fr.delcey.pokedexino.ui.utils.EquatableCallback
 import fr.delcey.pokedexino.ui.utils.SingleLiveEvent
 import fr.delcey.pokedexino.ui.utils.capitalized
@@ -38,56 +39,59 @@ class PokemonsViewModel @Inject constructor(
             getPagedPokemonsUseCase.get(),
             getFavoritePokemonIdsUseCase()
         ) { currentUser, pagedPokemons, favoritePokemonIds ->
-            if (pagedPokemons.hasFailed) {
-                withContext(coroutineDispatcherProvider.main) {
-                    viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error))
+            when (pagedPokemons.failureState) {
+                CRITICAL -> withContext(coroutineDispatcherProvider.main) {
+                    viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error_io))
                 }
-                return@combine
-            }
+                TOO_MANY_ATTEMPTS -> withContext(coroutineDispatcherProvider.main) {
+                    viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error_critical))
+                }
+                null -> {
+                    val items = pagedPokemons.pokemons.map { pokemonEntity ->
+                        val isFavorite = favoritePokemonIds.any { it == pokemonEntity.id }
 
-            val items = pagedPokemons.pokemons.map { pokemonEntity ->
-                val isFavorite = favoritePokemonIds.any { it == pokemonEntity.id }
+                        PokemonsViewState.Item.Content(
+                            pokemonId = pokemonEntity.id,
+                            pokemonName = pokemonEntity.name.capitalized(),
+                            pokemonImageUrl = pokemonEntity.imageUrl,
+                            favoriteResourceDrawable = if (isFavorite) {
+                                R.drawable.ic_star_24
+                            } else {
+                                R.drawable.ic_star_outline_24
+                            },
+                            isFavoriteEnabled = currentUser != null,
+                            onCardClicked = EquatableCallback {
+                                Toast.makeText(context, "OnCardClicked", Toast.LENGTH_SHORT)
+                            },
+                            onFavoriteButtonClicked = EquatableCallback {
+                                viewModelScope.launch(coroutineDispatcherProvider.io) {
+                                    updateIsPokemonFavoriteUseCase(
+                                        pokemonEntity.id,
+                                        !isFavorite
+                                    )
+                                }
+                            },
+                        )
+                    }
 
-                PokemonsViewState.Item.Content(
-                    pokemonId = pokemonEntity.id,
-                    pokemonName = pokemonEntity.name.capitalized(),
-                    pokemonImageUrl = pokemonEntity.imageUrl,
-                    favoriteResourceDrawable = if (isFavorite) {
-                        R.drawable.ic_star_24
-                    } else {
-                        R.drawable.ic_star_outline_24
-                    },
-                    isFavoriteEnabled = currentUser != null,
-                    onCardClicked = EquatableCallback {
-                        Toast.makeText(context, "OnCardClicked", Toast.LENGTH_SHORT)
-                    },
-                    onFavoriteButtonClicked = EquatableCallback {
-                        viewModelScope.launch(coroutineDispatcherProvider.io) {
-                            updateIsPokemonFavoriteUseCase(
-                                pokemonEntity.id,
-                                !isFavorite
-                            )
-                        }
-                    },
-                )
-            }
-
-            if (items.isNotEmpty()) {
-                emit(
-                    PokemonsViewState(
-                        items = if (pagedPokemons.hasMoreData) {
-                            items + PokemonsViewState.Item.Loading(
-                                onDisplayed = EquatableCallback {
-                                    viewModelScope.launch(coroutineDispatcherProvider.io) {
-                                        getPagedPokemonsUseCase.loadNextPage()
-                                    }
+                    if (items.isNotEmpty()) {
+                        emit(
+                            PokemonsViewState(
+                                items = if (pagedPokemons.hasMoreData) {
+                                    items + PokemonsViewState.Item.Loading(
+                                        onDisplayed = EquatableCallback {
+                                            viewModelScope.launch(coroutineDispatcherProvider.io) {
+                                                getPagedPokemonsUseCase.loadNextPage()
+                                            }
+                                        }
+                                    )
+                                } else {
+                                    items
                                 }
                             )
-                        } else {
-                            items
-                        }
-                    )
-                )
+                        )
+                    }
+                }
             }
         }.collect()
     }

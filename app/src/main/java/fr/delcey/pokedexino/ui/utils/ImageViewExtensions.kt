@@ -2,6 +2,7 @@ package fr.delcey.pokedexino.ui.utils
 
 import android.annotation.SuppressLint
 import android.widget.ImageView
+import androidx.annotation.DrawableRes
 import androidx.core.view.isVisible
 import com.bumptech.glide.Glide
 import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
@@ -9,6 +10,7 @@ import com.bumptech.glide.load.resource.drawable.DrawableTransitionOptions
 @SuppressLint("CheckResult")
 fun ImageView.loadImageUrl(
     imageUrl: String?,
+    @DrawableRes
     fallbackResId: Int? = null,
     fade: Boolean = false,
     circleCrop: Boolean = false,

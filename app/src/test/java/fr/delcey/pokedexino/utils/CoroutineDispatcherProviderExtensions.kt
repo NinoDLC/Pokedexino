@@ -1,6 +1,6 @@
 package fr.delcey.pokedexino.utils
 
-import fr.delcey.pokedexino.CoroutineDispatcherProvider
+import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
 import io.mockk.every
 import io.mockk.mockk
 

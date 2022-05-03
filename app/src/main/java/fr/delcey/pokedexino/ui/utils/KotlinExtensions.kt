@@ -7,7 +7,7 @@ import java.util.*
 inline val Any?.exhaustive
     get() = Unit
 
-// Better to annoy thousand of people instead of making a breaking change during a major version change, right ?
+// Better to annoy thousands of people instead of making a breaking change during a major version change, right ?
 fun String.capitalized() = replaceFirstChar {
     if (it.isLowerCase()) {
         it.titlecase(Locale.getDefault())

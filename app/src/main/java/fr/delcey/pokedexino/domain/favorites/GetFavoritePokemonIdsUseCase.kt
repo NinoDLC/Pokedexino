@@ -11,7 +11,7 @@ class GetFavoritePokemonIdsUseCase @Inject constructor(
     private val userRepository: UserRepository,
     private val interpolatedFavoritePokemonRepository: InterpolatedFavoritePokemonRepository,
 ) {
-    operator fun invoke(): Flow<Collection<String>> = getLoggedUserUseCase()
+    operator fun invoke(): Flow<Collection<Long>> = getLoggedUserUseCase()
         .flatMapLatest { firebaseUser ->
             if (firebaseUser == null) {
                 flowOf(emptyList())
@@ -25,7 +25,11 @@ class GetFavoritePokemonIdsUseCase @Inject constructor(
                         interpolatedLikedPokemonIds[it] != false
                     }.plus(
                         // Add interpolated (not present yet in backend)
-                        interpolatedLikedPokemonIds.filter { it.value }.map { it.key }
+                        interpolatedLikedPokemonIds.filter {
+                            it.value
+                        }.map {
+                            it.key
+                        }
                     ).toSet() // To avoid duplicates
                 }
             }

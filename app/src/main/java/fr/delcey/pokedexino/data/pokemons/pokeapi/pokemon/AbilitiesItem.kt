@@ -11,5 +11,5 @@ data class AbilitiesItem(
     val ability: Ability? = null,
 
     @field:SerializedName("slot")
-    val slot: Int? = null
+    val slot: Long? = null
 )
