@@ -23,8 +23,6 @@ data class PokemonsViewState(
             val onFavoriteButtonClicked: EquatableCallback,
         ) : Item(Type.CONTENT)
 
-        data class Loading(
-            val onDisplayed: EquatableCallback,
-        ) : Item(Type.LOADING)
+        object Loading : Item(Type.LOADING)
     }
 }

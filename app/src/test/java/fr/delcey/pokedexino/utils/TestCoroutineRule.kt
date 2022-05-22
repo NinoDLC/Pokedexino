@@ -1,5 +1,8 @@
 package fr.delcey.pokedexino.utils
 
+import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
+import io.mockk.every
+import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.TestScope
@@ -14,7 +17,7 @@ class TestCoroutineRule : TestRule {
     val testCoroutineDispatcher = StandardTestDispatcher()
     private val testScope = TestScope(testCoroutineDispatcher)
 
-    override fun apply(base: Statement, description: Description?) = object : Statement() {
+    override fun apply(base: Statement, description: Description) = object : Statement() {
         @Throws(Throwable::class)
         override fun evaluate() {
             Dispatchers.setMain(testCoroutineDispatcher)
@@ -26,4 +29,10 @@ class TestCoroutineRule : TestRule {
     }
 
     fun runTest(block: suspend TestScope.() -> Unit) = testScope.runTest { block() }
+
+    fun getCoroutineDispatcherProvider() = mockk<CoroutineDispatcherProvider> {
+        every { main } returns testCoroutineDispatcher
+        every { io } returns testCoroutineDispatcher
+        every { default } returns testCoroutineDispatcher
+    }
 }

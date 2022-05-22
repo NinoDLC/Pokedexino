@@ -9,7 +9,6 @@ import com.bumptech.glide.Glide
 import fr.delcey.pokedexino.databinding.PokemonsItemBinding
 import fr.delcey.pokedexino.databinding.PokemonsItemLoadingBinding
 import fr.delcey.pokedexino.ui.utils.exhaustive
-import fr.delcey.pokedexino.ui.utils.logd
 
 class PokemonsAdapter : ListAdapter<PokemonsViewState.Item, RecyclerView.ViewHolder>(PokemonDiffUtil) {
 
@@ -21,7 +20,7 @@ class PokemonsAdapter : ListAdapter<PokemonsViewState.Item, RecyclerView.ViewHol
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
         when (val item = getItem(position)) {
             is PokemonsViewState.Item.Content -> (holder as PokemonViewContentHolder).bind(item)
-            is PokemonsViewState.Item.Loading -> (holder as PokemonViewLoadingHolder).bind(item)
+            is PokemonsViewState.Item.Loading -> Unit // Just display the loading
         }.exhaustive
     }
 
@@ -55,24 +54,17 @@ class PokemonsAdapter : ListAdapter<PokemonsViewState.Item, RecyclerView.ViewHol
         }
     }
 
-    class PokemonViewLoadingHolder(binding: PokemonsItemLoadingBinding) : RecyclerView.ViewHolder(binding.root) {
-
-        companion object {
-            fun newInstance(parent: ViewGroup) = PokemonViewLoadingHolder(
-                PokemonsItemLoadingBinding.inflate(LayoutInflater.from(parent.context), parent, false)
-            )
-        }
-
-        fun bind(item: PokemonsViewState.Item.Loading) {
-            item.onDisplayed.invoke()
-        }
+    object PokemonViewLoadingHolder {
+        fun newInstance(parent: ViewGroup) = object : RecyclerView.ViewHolder(
+            PokemonsItemLoadingBinding.inflate(LayoutInflater.from(parent.context), parent, false).root
+        ) {}
     }
 
     object PokemonDiffUtil : DiffUtil.ItemCallback<PokemonsViewState.Item>() {
         override fun areItemsTheSame(oldItem: PokemonsViewState.Item, newItem: PokemonsViewState.Item) =
-            oldItem is PokemonsViewState.Item.Content
-                && newItem is PokemonsViewState.Item.Content
-                && oldItem.pokemonId == newItem.pokemonId
+            oldItem is PokemonsViewState.Item.Loading && newItem is PokemonsViewState.Item.Loading
+                    || oldItem is PokemonsViewState.Item.Content && newItem is PokemonsViewState.Item.Content
+                    && oldItem.pokemonId == newItem.pokemonId
 
         override fun areContentsTheSame(oldItem: PokemonsViewState.Item, newItem: PokemonsViewState.Item) = oldItem == newItem
     }

@@ -11,7 +11,8 @@ import fr.delcey.pokedexino.R
 import fr.delcey.pokedexino.domain.favorites.GetFavoritePokemonIdsUseCase
 import fr.delcey.pokedexino.domain.favorites.UpdateIsPokemonFavoriteUseCase
 import fr.delcey.pokedexino.domain.pokemons.GetPagedPokemonsUseCase
-import fr.delcey.pokedexino.domain.pokemons.GetPagedPokemonsUseCase.FailureState.*
+import fr.delcey.pokedexino.domain.pokemons.GetPagedPokemonsUseCase.FailureState.CRITICAL
+import fr.delcey.pokedexino.domain.pokemons.GetPagedPokemonsUseCase.FailureState.TOO_MANY_ATTEMPTS
 import fr.delcey.pokedexino.domain.user.GetCurrentUserUseCase
 import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
 import fr.delcey.pokedexino.ui.utils.EquatableCallback
@@ -30,7 +31,7 @@ class PokemonsViewModel @Inject constructor(
     private val getPagedPokemonsUseCase: GetPagedPokemonsUseCase,
     private val getFavoritePokemonIdsUseCase: GetFavoritePokemonIdsUseCase,
     private val updateIsPokemonFavoriteUseCase: UpdateIsPokemonFavoriteUseCase,
-    coroutineDispatcherProvider: CoroutineDispatcherProvider,
+    private val coroutineDispatcherProvider: CoroutineDispatcherProvider,
 ) : ViewModel() {
 
     val viewStateLiveData: LiveData<PokemonsViewState> = liveData(coroutineDispatcherProvider.io) {
@@ -78,13 +79,7 @@ class PokemonsViewModel @Inject constructor(
                         emit(
                             PokemonsViewState(
                                 items = if (pagedPokemons.hasMoreData) {
-                                    items + PokemonsViewState.Item.Loading(
-                                        onDisplayed = EquatableCallback {
-                                            viewModelScope.launch(coroutineDispatcherProvider.io) {
-                                                getPagedPokemonsUseCase.loadNextPage()
-                                            }
-                                        }
-                                    )
+                                    items + PokemonsViewState.Item.Loading
                                 } else {
                                     items
                                 }
@@ -99,6 +94,12 @@ class PokemonsViewModel @Inject constructor(
     val viewActionEvents = SingleLiveEvent<PokemonsViewAction>()
 
     init {
+        viewModelScope.launch(coroutineDispatcherProvider.io) {
+            getPagedPokemonsUseCase.loadNextPage()
+        }
+    }
+
+    fun loadNextPage() {
         viewModelScope.launch(coroutineDispatcherProvider.io) {
             getPagedPokemonsUseCase.loadNextPage()
         }

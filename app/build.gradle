@@ -111,8 +111,12 @@ dependencies {
     kapt "androidx.room:room-compiler:$room_version"
 
     testImplementation 'junit:junit:4.13.2'
+    testImplementation "com.google.truth:truth:1.1.3"
     testImplementation "io.mockk:mockk:1.12.3"
-    testImplementation "androidx.arch.core:core-testing:2.1.0"
+    testImplementation("androidx.arch.core:core-testing:2.1.0") {
+        // Removes the Mockito dependency bundled with arch core (wtf android ??)
+        exclude group: 'org.mockito', module: 'mockito-core'
+    }
     testImplementation "org.jetbrains.kotlinx:kotlinx-coroutines-test:1.6.1"
 
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'

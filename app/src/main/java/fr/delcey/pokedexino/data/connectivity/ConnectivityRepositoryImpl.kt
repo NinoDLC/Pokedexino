@@ -36,8 +36,8 @@ class ConnectivityRepositoryImpl @Inject constructor(
                 // TODO NINO TEST 
                 connectivityManager.registerNetworkCallback(NetworkRequest.Builder().build(), networkCallback)
             }
-        }
 
-        awaitClose { connectivityManager?.unregisterNetworkCallback(networkCallback) }
+            awaitClose { connectivityManager.unregisterNetworkCallback(networkCallback) }
+        }
     }
 }

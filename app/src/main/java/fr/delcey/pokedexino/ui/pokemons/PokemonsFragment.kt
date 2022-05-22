@@ -5,6 +5,7 @@ import android.view.View
 import android.widget.Toast
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.recyclerview.widget.LinearLayoutManager
 import dagger.hilt.android.AndroidEntryPoint
 import fr.delcey.pokedexino.R
 import fr.delcey.pokedexino.databinding.PokemonsFragmentBinding
@@ -20,8 +21,15 @@ class PokemonsFragment : Fragment(R.layout.pokemons_fragment) {
         super.onViewCreated(view, savedInstanceState)
 
         val adapter = PokemonsAdapter()
+        val layoutManager = LinearLayoutManager(requireContext())
+        binding.pokemonsRecyclerView.layoutManager = layoutManager
         binding.pokemonsRecyclerView.adapter = adapter
         binding.pokemonsRecyclerView.itemAnimator = null
+        binding.pokemonsRecyclerView.addOnScrollListener(
+            InfiniteScrollListener(layoutManager) {
+                viewModel.loadNextPage()
+            }
+        )
 
         viewModel.viewStateLiveData.observe(viewLifecycleOwner) { state ->
             adapter.submitList(state.items)
