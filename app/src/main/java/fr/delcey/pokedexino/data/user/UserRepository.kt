@@ -59,7 +59,7 @@ class UserRepository @Inject constructor(
     fun getFavoritePokemonIds(userId: String): Flow<List<Long>> = callbackFlow {
         val listener = firebaseNodeResolver.getFavoritePokemonsCollection(userId)
             .addSnapshotListener { value, error ->
-                val favoritePokemonIds = value?.documents?.map { it.id.toLong() }
+                val favoritePokemonIds: List<Long>? = value?.documents?.map { it.id.toLong() }
 
                 if (error != null) {
                     loge(error)

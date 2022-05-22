@@ -3,7 +3,10 @@ package fr.delcey.pokedexino.domain.favorites
 import fr.delcey.pokedexino.data.user.InterpolatedFavoritePokemonRepository
 import fr.delcey.pokedexino.data.user.UserRepository
 import fr.delcey.pokedexino.domain.user.GetLoggedUserUseCase
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flowOf
 import javax.inject.Inject
 
 class GetFavoritePokemonIdsUseCase @Inject constructor(
@@ -16,22 +19,9 @@ class GetFavoritePokemonIdsUseCase @Inject constructor(
             if (firebaseUser == null) {
                 flowOf(emptyList())
             } else {
-                combine(
-                    userRepository.getFavoritePokemonIds(firebaseUser.uid),
-                    interpolatedFavoritePokemonRepository.interpolatedFavoritePokemonIdsFlow
-                ) { pokemonIds, interpolatedLikedPokemonIds ->
-                    pokemonIds.filter {
-                        // Keep null (not interpolated) or true (interpolated to favorite)
-                        interpolatedLikedPokemonIds[it] != false
-                    }.plus(
-                        // Add interpolated (not present yet in backend)
-                        interpolatedLikedPokemonIds.filter {
-                            it.value
-                        }.map {
-                            it.key
-                        }
-                    ).toSet() // To avoid duplicates
-                }
+                interpolatedFavoritePokemonRepository.interpolatedWithRealData(
+                    realDataListFlow = userRepository.getFavoritePokemonIds(firebaseUser.uid)
+                )
             }
         }.distinctUntilChanged()
 }

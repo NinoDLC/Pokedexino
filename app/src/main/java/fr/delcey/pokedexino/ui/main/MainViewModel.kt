@@ -97,6 +97,7 @@ class MainViewModel @Inject constructor(
         viewActionLiveEvent.value = MainViewAction.NavigateForResult(googleSignInIntent, GOOGLE_AUTH_REQUEST_CODE)
     }
 
+    // TODO NINO Not enough : constant link between auth and firestore needed !
     fun onActivityResult(requestCode: Int, data: Intent?) {
         if (requestCode == GOOGLE_AUTH_REQUEST_CODE) {
             viewModelScope.launch(coroutineDispatcherProvider.io) {
