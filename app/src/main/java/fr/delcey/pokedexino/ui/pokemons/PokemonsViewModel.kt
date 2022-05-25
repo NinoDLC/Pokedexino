@@ -31,7 +31,7 @@ class PokemonsViewModel @Inject constructor(
     private val getPagedPokemonsUseCase: GetPagedPokemonsUseCase,
     private val getFavoritePokemonIdsUseCase: GetFavoritePokemonIdsUseCase,
     private val updateIsPokemonFavoriteUseCase: UpdateIsPokemonFavoriteUseCase,
-    private val coroutineDispatcherProvider: CoroutineDispatcherProvider,
+    val coroutineDispatcherProvider: CoroutineDispatcherProvider,
 ) : ViewModel() {
 
     val viewStateLiveData: LiveData<PokemonsViewState> = liveData(coroutineDispatcherProvider.io) {
@@ -51,11 +51,12 @@ class PokemonsViewModel @Inject constructor(
             getFavoritePokemonIdsUseCase()
         ) { currentUser, pagedPokemons, favoritePokemonIds ->
             when (pagedPokemons.failureState) {
-                CRITICAL -> withContext(coroutineDispatcherProvider.main) {
-                    viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error_io))
-                }
+                // TODO NINO Rework errors
                 TOO_MANY_ATTEMPTS -> withContext(coroutineDispatcherProvider.main) {
                     viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error_critical))
+                }
+                CRITICAL -> withContext(coroutineDispatcherProvider.main) {
+                    viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error_io))
                 }
                 null -> {
                     val items = pagedPokemons.pokemons.map { pokemonEntity ->

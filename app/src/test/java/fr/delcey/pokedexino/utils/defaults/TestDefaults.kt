@@ -37,7 +37,7 @@ fun getGetPagedPokemonsUseCasePokemonListDto(
     pokemonCount: Int = DEFAULT_GET_PAGED_POKEMONS_USE_CASE_POKEMON_COUNT,
 ) = GetPagedPokemonsUseCase.PokemonListDto(
     pokemons = List(pokemonCount) { index -> getPokemonEntity(index) },
-    hasMoreData = false,
+    hasMoreData = true,
     failureState = null,
 )
 // endregion GetPagedPokemonsUseCase

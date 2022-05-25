@@ -5,6 +5,7 @@ import androidx.arch.core.executor.testing.InstantTaskExecutorRule
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import assertk.assertions.isNotNull
+import assertk.assertions.isNull
 import fr.delcey.pokedexino.R
 import fr.delcey.pokedexino.domain.favorites.GetFavoritePokemonIdsUseCase
 import fr.delcey.pokedexino.domain.favorites.UpdateIsPokemonFavoriteUseCase
@@ -17,13 +18,11 @@ import fr.delcey.pokedexino.utils.defaults.getGetPagedPokemonsUseCasePokemonList
 import fr.delcey.pokedexino.utils.defaults.getPokemonImageUrl
 import fr.delcey.pokedexino.utils.defaults.getPokemonName
 import fr.delcey.pokedexino.utils.observeForTesting
-import io.mockk.clearAllMocks
-import io.mockk.coJustRun
-import io.mockk.every
-import io.mockk.mockk
+import io.mockk.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.test.runCurrent
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
@@ -35,10 +34,6 @@ class PokemonsViewModelTest {
 
     @get:Rule
     val instantTaskExecutorRule = InstantTaskExecutorRule()
-
-    companion object {
-        private const val EXPECTED_PAGED_POKEMONS_DELAY = 200L
-    }
 
     private val context: Application = mockk()
     private val getCurrentUserUseCase: GetCurrentUserUseCase = mockk()
@@ -58,13 +53,8 @@ class PokemonsViewModelTest {
 
     @Before
     fun setUp() {
-        clearAllMocks()
-
         every { getCurrentUserUseCase() } returns flowOf(null)
-        every { getPagedPokemonsUseCase.get() } returns flow {
-            delay(EXPECTED_PAGED_POKEMONS_DELAY)
-            emit(getGetPagedPokemonsUseCasePokemonListDto())
-        }
+        every { getPagedPokemonsUseCase.get() } returns flowOf(getGetPagedPokemonsUseCasePokemonListDto())
         coJustRun { getPagedPokemonsUseCase.loadNextPage() }
         every { getFavoritePokemonIdsUseCase() } returns flowOf(emptyList())
         coJustRun { updateIsPokemonFavoriteUseCase.invoke(any(), any()) }
@@ -72,11 +62,19 @@ class PokemonsViewModelTest {
 
     @Test
     fun `initial case`() = testCoroutineRule.runTest {
+        // Given
+        val pagedPokemonsDelay = 200L
+        every { getPagedPokemonsUseCase.get() } returns flow {
+            delay(pagedPokemonsDelay)
+            emit(getGetPagedPokemonsUseCasePokemonListDto())
+        }
+
         // When
-        pokemonsViewModel.viewStateLiveData.observeForTesting(this) {
+        pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
+            advanceTimeByAndRun(pagedPokemonsDelay)
 
             // Then
-            assertThat(it.value)
+            assertThat(liveData.value)
                 .isNotNull()
                 .isEqualTo(
                     PokemonsViewState(
@@ -86,20 +84,110 @@ class PokemonsViewModelTest {
                         isLoadingVisible = true
                     )
                 )
+            assertThat(pokemonsViewModel.viewActionEvents.value).isNull()
+            coVerify(exactly = 1) {
+                getPagedPokemonsUseCase.loadNextPage()
+                getCurrentUserUseCase()
+                getPagedPokemonsUseCase.get()
+                getFavoritePokemonIdsUseCase()
+            }
+            confirmVerified(
+                context,
+                getCurrentUserUseCase,
+                getPagedPokemonsUseCase,
+                getFavoritePokemonIdsUseCase,
+                updateIsPokemonFavoriteUseCase,
+                coroutineDispatcherProvider
+            )
         }
     }
 
     @Test
     fun `nominal case`() = testCoroutineRule.runTest {
         // When
-        pokemonsViewModel.viewStateLiveData.observeForTesting(this) {
-            advanceTimeByAndRun(EXPECTED_PAGED_POKEMONS_DELAY)
+        pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
 
             // Then
-            assertThat(it.value)
+            assertThat(liveData.value)
                 .isNotNull()
                 .isEqualTo(getDefaultPokemonsViewState())
+            assertThat(pokemonsViewModel.viewActionEvents.value).isNull()
+            coVerify(exactly = 1) {
+                getPagedPokemonsUseCase.loadNextPage()
+                getCurrentUserUseCase()
+                getPagedPokemonsUseCase.get()
+                getFavoritePokemonIdsUseCase()
+            }
+            confirmVerified(
+                context,
+                getCurrentUserUseCase,
+                getPagedPokemonsUseCase,
+                getFavoritePokemonIdsUseCase,
+                updateIsPokemonFavoriteUseCase,
+                coroutineDispatcherProvider
+            )
         }
+    }
+
+    @Test
+    fun `nominal case - end of paging`() = testCoroutineRule.runTest {
+        // Given
+        every { getPagedPokemonsUseCase.get() } returns flowOf(
+            getGetPagedPokemonsUseCasePokemonListDto().copy(hasMoreData = true)
+        )
+
+        // When
+        pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
+
+            // Then
+            assertThat(liveData.value)
+                .isNotNull()
+                .isEqualTo(
+                    getDefaultPokemonsViewState().copy(
+                        items = getDefaultPokemonsViewState().items - PokemonsViewState.Item.Loading
+                    )
+                )
+            assertThat(pokemonsViewModel.viewActionEvents.value).isNull()
+        }
+    }
+
+    @Test
+    fun `error case - no items`() = testCoroutineRule.runTest {
+        // Given
+        every { getPagedPokemonsUseCase.get() } returns flowOf(
+            getGetPagedPokemonsUseCasePokemonListDto().copy(pokemons = emptyList())
+        )
+
+        // When
+        pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
+
+            // Then
+            assertThat(liveData.value)
+                .isNotNull()
+                .isEqualTo(
+                    getDefaultPokemonsViewState().copy(
+                        items = emptyList(),
+                        isRecyclerViewVisible = false,
+                        isEmptyStateVisible = true,
+                    )
+                )
+            assertThat(pokemonsViewModel.viewActionEvents.value).isNull()
+        }
+    }
+
+    // TODO NINO Moar tests
+
+    @Test
+    fun `verify onLoadMore`() = testCoroutineRule.runTest {
+        // When
+        pokemonsViewModel.onLoadMore()
+        runCurrent()
+
+        // Then
+        coVerify(exactly = 2) { // 2: Constructor and function invoke
+            getPagedPokemonsUseCase.loadNextPage()
+        }
+        confirmVerified(getPagedPokemonsUseCase)
     }
 }
 
@@ -115,7 +203,7 @@ private fun getDefaultPokemonsViewState() = PokemonsViewState(
             onCardClicked = mockk(),
             onFavoriteButtonClicked = mockk()
         )
-    },
+    } + PokemonsViewState.Item.Loading,
     isRecyclerViewVisible = true,
     isEmptyStateVisible = false,
     isLoadingVisible = false,

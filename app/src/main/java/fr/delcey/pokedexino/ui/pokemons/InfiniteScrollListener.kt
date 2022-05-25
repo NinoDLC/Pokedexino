@@ -13,15 +13,25 @@ class InfiniteScrollListener(
         private const val VISIBLE_THRESHOLD = 5
     }
 
+    private var yTotalScrolled = 0
+    private var yMax = 0
+
     override fun onScrolled(recyclerView: RecyclerView, dx: Int, dy: Int) {
+        yTotalScrolled + dy
+
         if (dy < 0) {
             return
         }
 
-        val totalItemCount = layoutManager.itemCount
-        val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
-        if (lastVisibleItemPosition == RecyclerView.NO_POSITION || lastVisibleItemPosition + VISIBLE_THRESHOLD >= totalItemCount) {
-            onLoadMore()
+        yTotalScrolled += dy
+
+        if (yTotalScrolled > yMax) {
+            yMax = yTotalScrolled
+            val totalItemCount = layoutManager.itemCount
+            val lastVisibleItemPosition = layoutManager.findLastVisibleItemPosition()
+            if (lastVisibleItemPosition == RecyclerView.NO_POSITION || lastVisibleItemPosition + VISIBLE_THRESHOLD >= totalItemCount) {
+                onLoadMore()
+            }
         }
     }
 }
