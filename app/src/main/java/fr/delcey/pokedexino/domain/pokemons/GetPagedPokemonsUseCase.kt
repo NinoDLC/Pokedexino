@@ -1,19 +1,14 @@
 package fr.delcey.pokedexino.domain.pokemons
 
-import android.util.Log
 import fr.delcey.pokedexino.domain.GlobalCoroutineScope
 import fr.delcey.pokedexino.domain.utils.ApiResult
 import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.updateAndGet
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 class GetPagedPokemonsUseCase @Inject constructor(
     private val pokemonRepository: PokemonRepository,
@@ -44,12 +39,9 @@ class GetPagedPokemonsUseCase @Inject constructor(
         maxLimitMutableFlow.flatMapLatest { maxLimit -> pokemonRepository.getLocalPokemonsFlow(limit = maxLimit, offset = 1) }
     ) { aggregatedRemotePokemons, localPokemons ->
 
-        val allIds = aggregatedRemotePokemons.pokemons.map { it.id }
+        val allIds = aggregatedRemotePokemons.pokemons.mapTo(mutableSetOf()) { it.id }
             .plus(localPokemons.map { it.id })
-            .toSet()
             .sorted()
-
-        Log.d("Nino", "get() called with: allIds = $allIds")
 
         aggregatedRemotePokemons.copy(
             pokemons = allIds.map { id ->
@@ -59,7 +51,6 @@ class GetPagedPokemonsUseCase @Inject constructor(
     }
 
     suspend fun loadNextPage() {
-        Log.d("Nino", "loadNextPage() called, maxLimitMutableFlow.value = ${maxLimitMutableFlow.value}")
         val result = pokemonRepository.getRemotePagedPokemons(
             limit = maxLimitMutableFlow.updateAndGet { it + LIMIT },
             offset = 1

@@ -66,7 +66,8 @@ class PokemonsAdapter : ListAdapter<PokemonsViewState.Item, RecyclerView.ViewHol
                     || oldItem is PokemonsViewState.Item.Content && newItem is PokemonsViewState.Item.Content
                     && oldItem.pokemonId == newItem.pokemonId
 
-        override fun areContentsTheSame(oldItem: PokemonsViewState.Item, newItem: PokemonsViewState.Item) = oldItem == newItem
+        override fun areContentsTheSame(oldItem: PokemonsViewState.Item, newItem: PokemonsViewState.Item) =
+            oldItem == newItem
     }
 }
 

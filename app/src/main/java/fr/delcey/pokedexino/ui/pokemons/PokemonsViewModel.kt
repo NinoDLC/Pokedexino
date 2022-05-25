@@ -35,6 +35,16 @@ class PokemonsViewModel @Inject constructor(
 ) : ViewModel() {
 
     val viewStateLiveData: LiveData<PokemonsViewState> = liveData(coroutineDispatcherProvider.io) {
+
+        emit(
+            PokemonsViewState(
+                items = emptyList(),
+                isRecyclerViewVisible = false,
+                isEmptyStateVisible = false,
+                isLoadingVisible = true
+            )
+        )
+
         combine(
             getCurrentUserUseCase(),
             getPagedPokemonsUseCase.get(),
@@ -67,25 +77,35 @@ class PokemonsViewModel @Inject constructor(
                             onFavoriteButtonClicked = EquatableCallback {
                                 viewModelScope.launch(coroutineDispatcherProvider.io) {
                                     updateIsPokemonFavoriteUseCase(
-                                        pokemonEntity.id,
-                                        !isFavorite
+                                        pokemonId = pokemonEntity.id,
+                                        isFavorite = !isFavorite
                                     )
                                 }
                             },
                         )
                     }
 
-                    if (items.isNotEmpty()) {
-                        emit(
+                    emit(
+                        if (items.isNotEmpty()) {
                             PokemonsViewState(
                                 items = if (pagedPokemons.hasMoreData) {
                                     items + PokemonsViewState.Item.Loading
                                 } else {
                                     items
-                                }
+                                },
+                                isRecyclerViewVisible = true,
+                                isEmptyStateVisible = false,
+                                isLoadingVisible = false,
                             )
-                        )
-                    }
+                        } else {
+                            PokemonsViewState(
+                                items = emptyList(),
+                                isRecyclerViewVisible = false,
+                                isEmptyStateVisible = true,
+                                isLoadingVisible = false,
+                            )
+                        }
+                    )
                 }
             }
         }.collect()
@@ -94,12 +114,14 @@ class PokemonsViewModel @Inject constructor(
     val viewActionEvents = SingleLiveEvent<PokemonsViewAction>()
 
     init {
-        viewModelScope.launch(coroutineDispatcherProvider.io) {
-            getPagedPokemonsUseCase.loadNextPage()
-        }
+        loadNextPage()
     }
 
-    fun loadNextPage() {
+    fun onLoadMore() {
+        loadNextPage()
+    }
+
+    private fun loadNextPage() {
         viewModelScope.launch(coroutineDispatcherProvider.io) {
             getPagedPokemonsUseCase.loadNextPage()
         }

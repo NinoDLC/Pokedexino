@@ -3,6 +3,7 @@ package fr.delcey.pokedexino.ui.pokemons
 import android.os.Bundle
 import android.view.View
 import android.widget.Toast
+import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.LinearLayoutManager
@@ -27,11 +28,14 @@ class PokemonsFragment : Fragment(R.layout.pokemons_fragment) {
         binding.pokemonsRecyclerView.itemAnimator = null
         binding.pokemonsRecyclerView.addOnScrollListener(
             InfiniteScrollListener(layoutManager) {
-                viewModel.loadNextPage()
+                viewModel.onLoadMore()
             }
         )
 
         viewModel.viewStateLiveData.observe(viewLifecycleOwner) { state ->
+            binding.pokemonsLoadingView.isVisible = state.isLoadingVisible
+            binding.pokemonsEmptyView.isVisible = state.isEmptyStateVisible
+            binding.pokemonsRecyclerView.isVisible = state.isRecyclerViewVisible
             adapter.submitList(state.items)
         }
 

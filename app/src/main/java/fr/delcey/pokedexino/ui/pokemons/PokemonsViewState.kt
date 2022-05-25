@@ -5,7 +5,11 @@ import fr.delcey.pokedexino.ui.utils.EquatableCallback
 
 data class PokemonsViewState(
     val items: List<Item>,
+    val isRecyclerViewVisible: Boolean,
+    val isEmptyStateVisible: Boolean,
+    val isLoadingVisible: Boolean,
 ) {
+
     sealed class Item(val type: Type) {
         enum class Type {
             LOADING,

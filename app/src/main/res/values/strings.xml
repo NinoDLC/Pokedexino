@@ -12,4 +12,5 @@
 
     <!-- A11y -->
     <string name="a11y_add_to_favorites">Add %s to favorites</string>
+    <string name="pokemons_empty_state">Oops! No pokemon found…</string>
 </resources>
