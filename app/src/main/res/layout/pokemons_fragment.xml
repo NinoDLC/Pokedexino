@@ -18,22 +18,6 @@
         tools:listitem="@layout/pokemons_item"
         />
 
-    <TextView
-        android:id="@+id/pokemons_empty_view"
-        android:layout_width="0dp"
-        android:layout_height="wrap_content"
-        android:layout_margin="16dp"
-        android:gravity="center"
-        android:text="@string/pokemons_empty_state"
-        android:textSize="17sp"
-        android:textStyle="bold"
-        android:visibility="gone"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        />
-
     <ProgressBar
         android:id="@+id/pokemons_loading_view"
         android:layout_width="64dp"

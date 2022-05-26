@@ -1,14 +1,19 @@
 package fr.delcey.pokedexino.domain.pokemons
 
+import android.util.Log
 import fr.delcey.pokedexino.domain.GlobalCoroutineScope
 import fr.delcey.pokedexino.domain.utils.ApiResult
 import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
+import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.*
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.updateAndGet
 import kotlinx.coroutines.launch
 import javax.inject.Inject
-import kotlin.time.Duration.Companion.seconds
 
 class GetPagedPokemonsUseCase @Inject constructor(
     private val pokemonRepository: PokemonRepository,
@@ -21,6 +26,7 @@ class GetPagedPokemonsUseCase @Inject constructor(
         private const val LIMIT = 20L
 
         private val RETRY_BASE_DELAY = 1.seconds
+        private val RETRY_MAX_DELAY = 30.seconds
     }
 
     private val aggregatedRemotePokemonsMutableFlow = MutableStateFlow(
@@ -51,8 +57,11 @@ class GetPagedPokemonsUseCase @Inject constructor(
     }
 
     suspend fun loadNextPage() {
+        val limit = maxLimitMutableFlow.updateAndGet { it + LIMIT }
+        Log.d("Nino", "(UC)loadNextPage() called with limit = $limit")
+
         val result = pokemonRepository.getRemotePagedPokemons(
-            limit = maxLimitMutableFlow.updateAndGet { it + LIMIT },
+            limit = limit,
             offset = 1
         )
 
@@ -82,14 +91,15 @@ class GetPagedPokemonsUseCase @Inject constructor(
                     hasMoreData = false,
                 )
             )
-            is ApiResult.Failure.IoException -> if (retryCount >= 5) {
-                aggregatedRemotePokemonsMutableFlow.tryEmit(
-                    aggregatedRemotePokemonsMutableFlow.value.copy(failureState = FailureState.TOO_MANY_ATTEMPTS)
-                )
-            } else {
+            is ApiResult.Failure.IoException -> {
+                if (retryCount >= 5) {
+                    aggregatedRemotePokemonsMutableFlow.tryEmit(
+                        aggregatedRemotePokemonsMutableFlow.value.copy(failureState = FailureState.TOO_MANY_ATTEMPTS)
+                    )
+                }
                 retryCount++
 
-                delay(RETRY_BASE_DELAY * retryCount)
+                delay((RETRY_BASE_DELAY * retryCount).coerceAtMost(RETRY_MAX_DELAY))
 
                 loadNextPage()
             }

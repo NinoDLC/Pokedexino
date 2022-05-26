@@ -2,6 +2,7 @@ package fr.delcey.pokedexino.utils
 
 import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
 import io.mockk.every
+import io.mockk.excludeRecords
 import io.mockk.mockk
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.test.StandardTestDispatcher

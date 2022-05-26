@@ -18,7 +18,13 @@ import fr.delcey.pokedexino.utils.defaults.getGetPagedPokemonsUseCasePokemonList
 import fr.delcey.pokedexino.utils.defaults.getPokemonImageUrl
 import fr.delcey.pokedexino.utils.defaults.getPokemonName
 import fr.delcey.pokedexino.utils.observeForTesting
-import io.mockk.*
+import io.mockk.coEvery
+import io.mockk.coJustRun
+import io.mockk.coVerify
+import io.mockk.confirmVerified
+import io.mockk.every
+import io.mockk.mockk
+import io.mockk.verify
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
@@ -71,7 +77,6 @@ class PokemonsViewModelTest {
 
         // When
         pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
-            advanceTimeByAndRun(pagedPokemonsDelay)
 
             // Then
             assertThat(liveData.value)
@@ -80,7 +85,6 @@ class PokemonsViewModelTest {
                     PokemonsViewState(
                         items = emptyList(),
                         isRecyclerViewVisible = false,
-                        isEmptyStateVisible = false,
                         isLoadingVisible = true
                     )
                 )
@@ -91,6 +95,7 @@ class PokemonsViewModelTest {
                 getPagedPokemonsUseCase.get()
                 getFavoritePokemonIdsUseCase()
             }
+            verify { coroutineDispatcherProvider.io }
             confirmVerified(
                 context,
                 getCurrentUserUseCase,
@@ -118,6 +123,7 @@ class PokemonsViewModelTest {
                 getPagedPokemonsUseCase.get()
                 getFavoritePokemonIdsUseCase()
             }
+            verify { coroutineDispatcherProvider.io }
             confirmVerified(
                 context,
                 getCurrentUserUseCase,
@@ -132,9 +138,7 @@ class PokemonsViewModelTest {
     @Test
     fun `nominal case - end of paging`() = testCoroutineRule.runTest {
         // Given
-        every { getPagedPokemonsUseCase.get() } returns flowOf(
-            getGetPagedPokemonsUseCasePokemonListDto().copy(hasMoreData = true)
-        )
+        every { getPagedPokemonsUseCase.get() } returns flowOf(getGetPagedPokemonsUseCasePokemonListDto().copy(hasMoreData = false))
 
         // When
         pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
@@ -154,9 +158,7 @@ class PokemonsViewModelTest {
     @Test
     fun `error case - no items`() = testCoroutineRule.runTest {
         // Given
-        every { getPagedPokemonsUseCase.get() } returns flowOf(
-            getGetPagedPokemonsUseCasePokemonListDto().copy(pokemons = emptyList())
-        )
+        every { getPagedPokemonsUseCase.get() } returns flowOf(getGetPagedPokemonsUseCasePokemonListDto().copy(pokemons = emptyList()))
 
         // When
         pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
@@ -165,26 +167,177 @@ class PokemonsViewModelTest {
             assertThat(liveData.value)
                 .isNotNull()
                 .isEqualTo(
-                    getDefaultPokemonsViewState().copy(
+                    PokemonsViewState(
                         items = emptyList(),
                         isRecyclerViewVisible = false,
-                        isEmptyStateVisible = true,
+                        isLoadingVisible = true,
                     )
                 )
             assertThat(pokemonsViewModel.viewActionEvents.value).isNull()
         }
     }
 
-    // TODO NINO Moar tests
+    @Test
+    fun `error case - too many consecutive IO exceptions at first launch`() = testCoroutineRule.runTest {
+        // Given
+        every { getPagedPokemonsUseCase.get() } returns flowOf(
+            GetPagedPokemonsUseCase.PokemonListDto(
+                pokemons = emptyList(),
+                hasMoreData = false,
+                failureState = GetPagedPokemonsUseCase.FailureState.TOO_MANY_ATTEMPTS,
+            )
+        )
+        every { context.getString(R.string.pokemons_query_error_io) } returns "pokemons_query_error_io"
+
+        // When
+        pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
+
+            // Then
+            assertThat(liveData.value)
+                .isNotNull()
+                .isEqualTo(
+                    PokemonsViewState(
+                        items = emptyList(),
+                        isRecyclerViewVisible = false,
+                        isLoadingVisible = true,
+                    )
+                )
+            assertThat(pokemonsViewModel.viewActionEvents.value)
+                .isNotNull()
+                .isEqualTo(PokemonsViewAction.Toast("pokemons_query_error_io"))
+        }
+    }
+
+    @Test
+    fun `error case - too many consecutive IO exceptions after a first success`() = testCoroutineRule.runTest {
+        // Given
+        every { getPagedPokemonsUseCase.get() } returns flowOf(
+            getGetPagedPokemonsUseCasePokemonListDto().copy(
+                failureState = GetPagedPokemonsUseCase.FailureState.TOO_MANY_ATTEMPTS
+            )
+        )
+        every { context.getString(R.string.pokemons_query_error_io) } returns "pokemons_query_error_io"
+
+        // When
+        pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
+
+            // Then
+            assertThat(liveData.value)
+                .isNotNull()
+                .isEqualTo(getDefaultPokemonsViewState())
+            assertThat(pokemonsViewModel.viewActionEvents.value)
+                .isNotNull()
+                .isEqualTo(PokemonsViewAction.Toast("pokemons_query_error_io"))
+        }
+    }
+
+    @Test
+    fun `error case - critical error at first launch`() = testCoroutineRule.runTest {
+        // Given
+        every { getPagedPokemonsUseCase.get() } returns flowOf(
+            GetPagedPokemonsUseCase.PokemonListDto(
+                pokemons = emptyList(),
+                hasMoreData = false,
+                failureState = GetPagedPokemonsUseCase.FailureState.CRITICAL,
+            )
+        )
+        every { context.getString(R.string.pokemons_query_error_critical) } returns "pokemons_query_error_critical"
+
+        // When
+        pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
+
+            // Then
+            assertThat(liveData.value)
+                .isNotNull()
+                .isEqualTo(
+                    PokemonsViewState(
+                        items = emptyList(),
+                        isRecyclerViewVisible = false,
+                        isLoadingVisible = true,
+                    )
+                )
+            assertThat(pokemonsViewModel.viewActionEvents.value)
+                .isNotNull()
+                .isEqualTo(PokemonsViewAction.Toast("pokemons_query_error_critical"))
+        }
+    }
+
+    @Test
+    fun `error case - critical error after a first success`() = testCoroutineRule.runTest {
+        // Given
+        every { getPagedPokemonsUseCase.get() } returns flowOf(
+            getGetPagedPokemonsUseCasePokemonListDto().copy(
+                failureState = GetPagedPokemonsUseCase.FailureState.CRITICAL
+            )
+        )
+        every { context.getString(R.string.pokemons_query_error_critical) } returns "pokemons_query_error_critical"
+
+        // When
+        pokemonsViewModel.viewStateLiveData.observeForTesting(this) { liveData ->
+
+            // Then
+            assertThat(liveData.value)
+                .isNotNull()
+                .isEqualTo(getDefaultPokemonsViewState())
+            assertThat(pokemonsViewModel.viewActionEvents.value)
+                .isNotNull()
+                .isEqualTo(PokemonsViewAction.Toast("pokemons_query_error_critical"))
+        }
+    }
 
     @Test
     fun `verify onLoadMore`() = testCoroutineRule.runTest {
+        // Given
+        runCurrent()
+
         // When
         pokemonsViewModel.onLoadMore()
         runCurrent()
 
         // Then
         coVerify(exactly = 2) { // 2: Constructor and function invoke
+            getPagedPokemonsUseCase.loadNextPage()
+        }
+        confirmVerified(getPagedPokemonsUseCase)
+    }
+
+    @Test
+    fun `don't load twice if the first query did not finish yet`() = testCoroutineRule.runTest {
+        // Given
+        coEvery { getPagedPokemonsUseCase.loadNextPage() } coAnswers {
+            delay(200)
+        }
+        advanceTimeByAndRun(200) // Constructor init
+        pokemonsViewModel.onLoadMore()
+        advanceTimeByAndRun(199)
+
+        // When
+        pokemonsViewModel.onLoadMore()
+        runCurrent()
+
+        // Then
+        coVerify(exactly = 2) { // 2: Constructor and function invoke
+            getPagedPokemonsUseCase.loadNextPage()
+        }
+        confirmVerified(getPagedPokemonsUseCase)
+    }
+
+    @Test
+    fun `do load a second time if the first query finished`() = testCoroutineRule.runTest {
+        // Given
+        coEvery { getPagedPokemonsUseCase.loadNextPage() } coAnswers {
+            delay(200)
+        }
+        advanceTimeByAndRun(200) // Constructor init
+        pokemonsViewModel.onLoadMore()
+        advanceTimeByAndRun(200)
+
+        // When
+        pokemonsViewModel.onLoadMore()
+        runCurrent()
+
+        // Then
+        coVerify(exactly = 3) { // 3: Constructor and 2 function invoke
             getPagedPokemonsUseCase.loadNextPage()
         }
         confirmVerified(getPagedPokemonsUseCase)
@@ -205,7 +358,6 @@ private fun getDefaultPokemonsViewState() = PokemonsViewState(
         )
     } + PokemonsViewState.Item.Loading,
     isRecyclerViewVisible = true,
-    isEmptyStateVisible = false,
     isLoadingVisible = false,
 )
 // endregion OUT

@@ -22,6 +22,7 @@ import kotlinx.coroutines.flow.collect
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.util.concurrent.atomic.AtomicBoolean
 import javax.inject.Inject
 
 @HiltViewModel
@@ -40,7 +41,6 @@ class PokemonsViewModel @Inject constructor(
             PokemonsViewState(
                 items = emptyList(),
                 isRecyclerViewVisible = false,
-                isEmptyStateVisible = false,
                 isLoadingVisible = true
             )
         )
@@ -50,62 +50,56 @@ class PokemonsViewModel @Inject constructor(
             getPagedPokemonsUseCase.get(),
             getFavoritePokemonIdsUseCase()
         ) { currentUser, pagedPokemons, favoritePokemonIds ->
-            when (pagedPokemons.failureState) {
-                // TODO NINO Rework errors
-                TOO_MANY_ATTEMPTS -> withContext(coroutineDispatcherProvider.main) {
-                    viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error_critical))
-                }
-                CRITICAL -> withContext(coroutineDispatcherProvider.main) {
-                    viewActionEvents.value = PokemonsViewAction.Toast(context.getString(R.string.pokemons_query_error_io))
-                }
-                null -> {
-                    val items = pagedPokemons.pokemons.map { pokemonEntity ->
-                        val isFavorite = favoritePokemonIds.any { it == pokemonEntity.id }
+            val items = pagedPokemons.pokemons.map { pokemonEntity ->
+                val isFavorite = favoritePokemonIds.any { it == pokemonEntity.id }
 
-                        PokemonsViewState.Item.Content(
-                            pokemonId = pokemonEntity.id,
-                            pokemonName = pokemonEntity.name.capitalized(),
-                            pokemonImageUrl = pokemonEntity.imageUrl,
-                            favoriteResourceDrawable = if (isFavorite) {
-                                R.drawable.ic_star_24
-                            } else {
-                                R.drawable.ic_star_outline_24
-                            },
-                            isFavoriteEnabled = currentUser != null,
-                            onCardClicked = EquatableCallback {
-                                Toast.makeText(context, "OnCardClicked", Toast.LENGTH_SHORT)
-                            },
-                            onFavoriteButtonClicked = EquatableCallback {
-                                viewModelScope.launch(coroutineDispatcherProvider.io) {
-                                    updateIsPokemonFavoriteUseCase(
-                                        pokemonId = pokemonEntity.id,
-                                        isFavorite = !isFavorite
-                                    )
-                                }
-                            },
-                        )
-                    }
-
-                    emit(
-                        if (items.isNotEmpty()) {
-                            PokemonsViewState(
-                                items = if (pagedPokemons.hasMoreData) {
-                                    items + PokemonsViewState.Item.Loading
-                                } else {
-                                    items
-                                },
-                                isRecyclerViewVisible = true,
-                                isEmptyStateVisible = false,
-                                isLoadingVisible = false,
-                            )
-                        } else {
-                            PokemonsViewState(
-                                items = emptyList(),
-                                isRecyclerViewVisible = false,
-                                isEmptyStateVisible = true,
-                                isLoadingVisible = false,
+                PokemonsViewState.Item.Content(
+                    pokemonId = pokemonEntity.id,
+                    pokemonName = pokemonEntity.name.capitalized(),
+                    pokemonImageUrl = pokemonEntity.imageUrl,
+                    favoriteResourceDrawable = if (isFavorite) {
+                        R.drawable.ic_star_24
+                    } else {
+                        R.drawable.ic_star_outline_24
+                    },
+                    isFavoriteEnabled = currentUser != null,
+                    onCardClicked = EquatableCallback {
+                        Toast.makeText(context, "OnCardClicked", Toast.LENGTH_SHORT)
+                    },
+                    onFavoriteButtonClicked = EquatableCallback {
+                        viewModelScope.launch(coroutineDispatcherProvider.io) {
+                            updateIsPokemonFavoriteUseCase(
+                                pokemonId = pokemonEntity.id,
+                                isFavorite = !isFavorite
                             )
                         }
+                    },
+                )
+            }
+
+            if (items.isNotEmpty()) {
+                emit(
+                    PokemonsViewState(
+                        items = if (pagedPokemons.hasMoreData) {
+                            items + PokemonsViewState.Item.Loading
+                        } else {
+                            items
+                        },
+                        isRecyclerViewVisible = true,
+                        isLoadingVisible = false,
+                    )
+                )
+            }
+
+            if (pagedPokemons.failureState != null) {
+                withContext(coroutineDispatcherProvider.main) {
+                    viewActionEvents.value = PokemonsViewAction.Toast(
+                        message = context.getString(
+                            when (pagedPokemons.failureState) {
+                                TOO_MANY_ATTEMPTS -> R.string.pokemons_query_error_io
+                                CRITICAL -> R.string.pokemons_query_error_critical
+                            }
+                        )
                     )
                 }
             }
@@ -113,6 +107,8 @@ class PokemonsViewModel @Inject constructor(
     }
 
     val viewActionEvents = SingleLiveEvent<PokemonsViewAction>()
+
+    private val isLoadingNextPage = AtomicBoolean(false)
 
     init {
         loadNextPage()
@@ -123,8 +119,11 @@ class PokemonsViewModel @Inject constructor(
     }
 
     private fun loadNextPage() {
-        viewModelScope.launch(coroutineDispatcherProvider.io) {
-            getPagedPokemonsUseCase.loadNextPage()
+        if (isLoadingNextPage.compareAndSet(false, true)) {
+            viewModelScope.launch(coroutineDispatcherProvider.io) {
+                getPagedPokemonsUseCase.loadNextPage()
+                isLoadingNextPage.set(false)
+            }
         }
     }
 }

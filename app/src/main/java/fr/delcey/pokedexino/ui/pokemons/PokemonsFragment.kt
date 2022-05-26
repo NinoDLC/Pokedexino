@@ -34,7 +34,6 @@ class PokemonsFragment : Fragment(R.layout.pokemons_fragment) {
 
         viewModel.viewStateLiveData.observe(viewLifecycleOwner) { state ->
             binding.pokemonsLoadingView.isVisible = state.isLoadingVisible
-            binding.pokemonsEmptyView.isVisible = state.isEmptyStateVisible
             binding.pokemonsRecyclerView.isVisible = state.isRecyclerViewVisible
             adapter.submitList(state.items)
         }
