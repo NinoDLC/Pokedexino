@@ -11,7 +11,6 @@ import fr.delcey.pokedexino.R
 import fr.delcey.pokedexino.domain.favorites.GetFavoritePokemonIdsUseCase
 import fr.delcey.pokedexino.domain.favorites.UpdateIsPokemonFavoriteUseCase
 import fr.delcey.pokedexino.domain.pokemons.GetPagedPokemonsUseCase
-import fr.delcey.pokedexino.domain.pokemons.GetPagedRemotePokemonsQueryStateUseCase
 import fr.delcey.pokedexino.domain.user.GetCurrentUserUseCase
 import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
 import fr.delcey.pokedexino.ui.utils.EquatableCallback
@@ -95,8 +94,8 @@ class PokemonsViewModel @Inject constructor(
                     viewActionEvents.value = PokemonsViewAction.Toast(
                         message = context.getString(
                             when (pagedPokemons.failureState) {
-                                GetPagedRemotePokemonsQueryStateUseCase.FailureState.TOO_MANY_ATTEMPTS -> R.string.pokemons_query_error_io
-                                GetPagedRemotePokemonsQueryStateUseCase.FailureState.CRITICAL -> R.string.pokemons_query_error_critical
+                                GetPagedPokemonsUseCase.FailureState.TOO_MANY_ATTEMPTS -> R.string.pokemons_query_error_io
+                                GetPagedPokemonsUseCase.FailureState.CRITICAL -> R.string.pokemons_query_error_critical
                             }
                         )
                     )

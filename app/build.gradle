@@ -58,6 +58,26 @@ android {
             keyPassword "android"
         }
     }
+
+    testOptions {
+        unitTests.all {
+            if (it.name == "testDebugUnitTest") {
+                kover {
+                    disabled = false
+                    excludes = [
+                            "*_*Factory.*",
+                            "*_Factory.*",
+                            "Hilt_*",
+                            "*_Hilt*",
+                    ]
+                }
+            } else if (it.name == "testReleaseUnitTest") {
+                kover {
+                    disabled = true
+                }
+            }
+        }
+    }
 }
 
 dependencies {

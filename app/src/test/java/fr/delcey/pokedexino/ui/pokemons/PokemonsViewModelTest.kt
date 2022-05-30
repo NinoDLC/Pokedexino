@@ -18,13 +18,7 @@ import fr.delcey.pokedexino.utils.defaults.getGetPagedPokemonsUseCasePokemonList
 import fr.delcey.pokedexino.utils.defaults.getPokemonImageUrl
 import fr.delcey.pokedexino.utils.defaults.getPokemonName
 import fr.delcey.pokedexino.utils.observeForTesting
-import io.mockk.coEvery
-import io.mockk.coJustRun
-import io.mockk.coVerify
-import io.mockk.confirmVerified
-import io.mockk.every
-import io.mockk.mockk
-import io.mockk.verify
+import io.mockk.*
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf

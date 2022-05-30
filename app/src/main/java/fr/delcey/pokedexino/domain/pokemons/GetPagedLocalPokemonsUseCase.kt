@@ -37,8 +37,5 @@ class GetPagedLocalPokemonsUseCase @Inject constructor(
     }.conflate().flowOn(coroutineDispatcherProvider.io)
 
     fun loadNextPage() {
-        pageMutableFlow.tryEmit((pageMutableFlow.replayCache.firstOrNull()?.plus(1) ?: 1).also {
-            Log.d("Nino", "(UC-Local)loadNextPage() called with page = $it")
-        })
     }
 }
