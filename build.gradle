@@ -22,21 +22,3 @@ plugins {
 task clean(type: Delete) {
     delete rootProject.buildDir
 }
-
-tasks.koverHtmlReport {
-    excludes = [
-            "*_*Factory.*",
-            "*_Factory.*",
-            "Hilt_*",
-            "*_Hilt*",
-    ]
-}
-
-tasks.koverMergedHtmlReport {
-    excludes = [
-            "*_*Factory.*",
-            "*_Factory.*",
-            "Hilt_*",
-            "*_Hilt*",
-    ]
-}
