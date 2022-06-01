@@ -18,7 +18,7 @@ class NavArgProducer @Inject constructor(private val savedStateHandle: SavedStat
 
     /**
      * Inspired from [androidx.navigation.NavArgsLazy]. Should its implementation change,
-     * this method should change accordingly
+     * this function should change accordingly.
      */
     fun <Args : NavArgs> getNavArgs(clazz: KClass<Args>): Args {
         val method = methodMap.getOrPut(clazz) { clazz.java.getMethod("fromSavedStateHandle", SavedStateHandle::class.java) }

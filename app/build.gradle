@@ -9,16 +9,16 @@ plugins {
 }
 
 def excludedFromCoverage = [
-        "*_fr_delcey_pokedexino_MainApplication",
+        "dagger.hilt.*",
         "*_Factory",
-        "*Hilt_*",
-        "*_Hilt*",
-        "*AppModule",
-        "*DataModule",
-        "*DomainModule",
-        "*Module_*Factory",
+        "*_*Factory",
+        "*.Hilt_*",
+        "*_HiltModules",
         "*_Impl",
-        "*hilt_aggregated_deps*",
+        "*.hilt_aggregated_deps.*",
+        "*.AppModule", // Your Hilt modules should be there if you don't want to test them
+        "*.DataModule",
+        "*.DomainModule",
 ]
 
 android {
