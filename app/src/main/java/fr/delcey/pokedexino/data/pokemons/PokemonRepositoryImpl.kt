@@ -1,5 +1,6 @@
 package fr.delcey.pokedexino.data.pokemons
 
+import android.util.Log
 import androidx.annotation.IntRange
 import fr.delcey.pokedexino.data.pokemons.local.PokemonDao
 import fr.delcey.pokedexino.data.pokemons.pokeapi.PokeApi
@@ -10,6 +11,7 @@ import kotlinx.coroutines.async
 import kotlinx.coroutines.awaitAll
 import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import java.security.InvalidParameterException
 import javax.inject.Inject
 
@@ -21,12 +23,15 @@ class PokemonRepositoryImpl @Inject constructor(
         TODO("Not yet implemented")
     }
 
+    // Room OFFSET keyword implementation is even worse, it will re-emit values to the flow even if the underlying values didn't change.
+    // If data is appended at the end of the table (for example id == 101+), all the flows "targeting" ids 1 to 100 will re-emit for nothing.
     override fun getLocalPokemonsFlow(limit: Long, offset: Long): Flow<List<PokemonEntity>> = pokemonDao.getPokemonsAsFlow(
         limit = limit,
         offset = offset
-    )
+    ).distinctUntilChanged()
 
     override suspend fun upsertLocalPokemons(pokemons: List<PokemonEntity>) {
+        Log.d("Nino", "upsertLocalPokemons() called with: pokemons = ${pokemons.size}, first id = ${pokemons.firstOrNull()?.id}")
         pokemonDao.updateAll(pokemons)
     }
 
