@@ -1,20 +1,13 @@
 package fr.delcey.pokedexino.domain.pokemons
 
-import android.util.Log
 import fr.delcey.pokedexino.domain.utils.ApiResult
 import fr.delcey.pokedexino.domain.utils.CoroutineDispatcherProvider
-import kotlin.time.Duration.Companion.seconds
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.MutableSharedFlow
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.channelFlow
-import kotlinx.coroutines.flow.combine
-import kotlinx.coroutines.flow.conflate
-import kotlinx.coroutines.flow.flowOn
+import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
+import kotlin.time.Duration.Companion.seconds
 
 class GetPagedPokemonsUseCase @Inject constructor(
     private val pokemonRepository: PokemonRepository,
@@ -30,9 +23,7 @@ class GetPagedPokemonsUseCase @Inject constructor(
     }
 
     // replay = Int.MAX_VALUE in case pageMutableFlow is updated before it is collected
-    private val pageMutableFlow = MutableSharedFlow<Long>(replay = Int.MAX_VALUE).apply {
-        tryEmit(0)
-    }
+    private val pageMutableFlow = MutableSharedFlow<Long>(replay = Int.MAX_VALUE)
 
     private val remotePokemonsQueryStateMutableFlow = MutableStateFlow(
         RemotePokemonsQueryState(
@@ -47,9 +38,7 @@ class GetPagedPokemonsUseCase @Inject constructor(
         remotePokemonsQueryStateMutableFlow,
     ) { localPokemons: TreeMap<Long, List<PokemonEntity>>, remotePokemonsQueryState: RemotePokemonsQueryState ->
         PokemonListDto(
-            pokemons = localPokemons.values.flatten().also {
-                Log.d("Nino", "get() called")
-            },
+            pokemons = localPokemons.values.flatten(),
             hasMoreData = remotePokemonsQueryState.hasMoreData,
             failureState = remotePokemonsQueryState.failureState,
         )
@@ -59,10 +48,9 @@ class GetPagedPokemonsUseCase @Inject constructor(
      * Suspends until a response from the remote API is received (successful or not)
      */
     suspend fun loadNextPage() {
-        val page = pageMutableFlow.replayCache.last() + 1
-        pageMutableFlow.tryEmit(page)
-
-        loadRemotePage(page = page)
+        val nextPage = pageMutableFlow.replayCache.lastOrNull()?.plus(1) ?: 0
+        pageMutableFlow.tryEmit(nextPage)
+        loadRemotePage(page = nextPage)
     }
 
     private fun getLocalFlow(): Flow<TreeMap<Long, List<PokemonEntity>>> = channelFlow {
@@ -74,7 +62,6 @@ class GetPagedPokemonsUseCase @Inject constructor(
                     limit = LIMIT,
                     offset = getOffset(page)
                 ).collect { pokemonEntities ->
-                    Log.d("Nino", "getLocalFlow() called for page = $page, entities = ${pokemonEntities.size}")
                     pagedPokemonEntities[page] = pokemonEntities
                     trySend(pagedPokemonEntities)
                 }

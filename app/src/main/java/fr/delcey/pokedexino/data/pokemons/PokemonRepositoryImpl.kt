@@ -1,6 +1,5 @@
 package fr.delcey.pokedexino.data.pokemons
 
-import android.util.Log
 import androidx.annotation.IntRange
 import fr.delcey.pokedexino.data.pokemons.local.PokemonDao
 import fr.delcey.pokedexino.data.pokemons.pokeapi.PokeApi
@@ -31,7 +30,6 @@ class PokemonRepositoryImpl @Inject constructor(
     ).distinctUntilChanged()
 
     override suspend fun upsertLocalPokemons(pokemons: List<PokemonEntity>) {
-        Log.d("Nino", "upsertLocalPokemons() called with: pokemons = ${pokemons.size}, first id = ${pokemons.firstOrNull()?.id}")
         pokemonDao.updateAll(pokemons)
     }
 
@@ -43,7 +41,7 @@ class PokemonRepositoryImpl @Inject constructor(
         limit < 1 -> throw InvalidParameterException("Limit value is $offset")
         else -> try {
             val pokemons: List<PokemonEntity?> = coroutineScope {
-                (offset..offset + limit).map { pokemonIdToQuery ->
+                (offset until offset + limit).map { pokemonIdToQuery ->
                     async {
                         val pokemonResponse = pokeApi.getPokemonById(pokemonIdToQuery)
 
