@@ -1,4 +1,4 @@
-package fr.delcey.pokedexino.data
+package fr.delcey.pokedexino.data.utils
 
 import com.google.firebase.firestore.FirebaseFirestore
 import javax.inject.Inject

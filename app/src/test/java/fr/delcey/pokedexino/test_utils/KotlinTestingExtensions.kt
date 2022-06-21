@@ -1,5 +1,10 @@
 package fr.delcey.pokedexino.test_utils
 
+import kotlinx.coroutines.Deferred
+import kotlinx.coroutines.async
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.runCurrent
 
@@ -16,4 +21,15 @@ import kotlinx.coroutines.test.runCurrent
 fun TestScope.advanceTimeByAndRun(delayTimeMillis: Long) {
     testScheduler.advanceTimeBy(delayTimeMillis)
     runCurrent()
+}
+
+suspend fun <T> Flow<T>.firstWithInit(testScope: TestScope, afterStartedBlock: suspend () -> Unit): T {
+    val deferred: Deferred<T> = testScope.async {
+        first()
+    }
+
+    testScope.runCurrent()
+    afterStartedBlock()
+
+    return deferred.await()
 }

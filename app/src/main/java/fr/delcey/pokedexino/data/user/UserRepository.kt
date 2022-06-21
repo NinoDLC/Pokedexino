@@ -1,7 +1,7 @@
 package fr.delcey.pokedexino.data.user
 
 import com.google.firebase.firestore.ktx.toObject
-import fr.delcey.pokedexino.data.FirebaseNodeResolver
+import fr.delcey.pokedexino.data.utils.FirebaseNodeResolver
 import fr.delcey.pokedexino.domain.user.entity.UserEntity
 import fr.delcey.pokedexino.ui.utils.loge
 import kotlinx.coroutines.channels.awaitClose

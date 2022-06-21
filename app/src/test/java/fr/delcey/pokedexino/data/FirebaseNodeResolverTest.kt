@@ -1,6 +1,7 @@
 package fr.delcey.pokedexino.data
 
 import com.google.firebase.firestore.FirebaseFirestore
+import fr.delcey.pokedexino.data.utils.FirebaseNodeResolver
 import io.mockk.every
 import io.mockk.mockk
 import io.mockk.verify
