@@ -2,7 +2,6 @@ package fr.delcey.pokedexino.ui.utils
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.navigation.NavArgs
-import androidx.navigation.navArgument
 import assertk.assertThat
 import assertk.assertions.isEqualTo
 import io.mockk.mockk
@@ -26,8 +25,11 @@ class NavArgProducerTest {
         companion object {
             val fakeNavArgInstance = FakeNavArg()
 
+            @Suppress("unused") // Used in reflection
             @JvmStatic
-            fun fromSavedStateHandle(savedStateHandle: SavedStateHandle): NavArgs {
+            fun fromSavedStateHandle(
+                @Suppress("UNUSED_PARAMETER") savedStateHandle: SavedStateHandle // Used in reflection
+            ): NavArgs {
                 return fakeNavArgInstance
             }
         }

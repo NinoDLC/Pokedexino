@@ -9,7 +9,6 @@ import fr.delcey.pokedexino.domain.repository.ConnectivityRepository
 import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
-import kotlinx.coroutines.flow.conflate
 import kotlinx.coroutines.flow.distinctUntilChanged
 import javax.inject.Inject
 
@@ -18,7 +17,7 @@ class ConnectivityRepositoryImpl @Inject constructor(
     private val apiLevelHelper: ApiLevelHelper,
 ) : ConnectivityRepository {
 
-    override fun isInternetAvailableFlow(): Flow<Boolean> = callbackFlow<Boolean> {
+    override fun isInternetAvailableFlow(): Flow<Boolean> = callbackFlow {
         val networkCallback = object : ConnectivityManager.NetworkCallback() {
             override fun onAvailable(network: Network) {
                 trySend(true)
