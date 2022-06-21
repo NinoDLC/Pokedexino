@@ -2,6 +2,8 @@ package fr.delcey.pokedexino.data
 
 import android.app.Application
 import android.content.Context
+import android.net.ConnectivityManager
+import androidx.core.content.getSystemService
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.crashlytics.FirebaseCrashlytics
 import com.google.firebase.firestore.FirebaseFirestore
@@ -68,4 +70,8 @@ class DataModule {
     @Singleton
     @Provides
     fun provideFirebaseCrashlytics(): FirebaseCrashlytics = FirebaseCrashlytics.getInstance()
+
+    @Singleton
+    @Provides
+    fun provideConnectivityManager(application: Application) : ConnectivityManager? = application.getSystemService()
 }

@@ -20,9 +20,33 @@ def excludedFromCoverage = [
         "*_HiltModules\$*",
         "*_Impl",
         "*_Impl\$*",
-        "*.AppModule", // Your Hilt modules should be there if you don't want to test them
+        "*.AppModule",
+        "*.AppModule\$*",
+        "*.AppBindingModule",
+        "*.AppBindingModule\$*",
         "*.DataModule",
+        "*.DataModule\$*",
+        "*.DataBindingModule",
+        "*.DataBindingModule\$*",
         "*.DomainModule",
+        "*.DomainModule\$*",
+        "*.DomainBindingModule",
+        "*.DomainBindingModule\$*",
+
+        "*Dto", // TODO Nino: Find a decent way to test dtos... if any ?!
+
+        "fr.delcey.pokedexino.BuildConfig", // TODO Nino: Why Kover doesn't understand tests on BuildConfig ?!
+
+        // TODO Nino: Remove below when Kover can handle Android integration tests!
+        "*Fragment",
+        "*Fragment\$*",
+        "*Activity",
+        "*Activity\$*",
+        "*AppDatabase",
+        "*AppDatabase\$*",
+        "fr.delcey.pokedexino.databinding.*",
+        "*Adapter",
+        "*Adapter\$*"
 ]
 
 android {
@@ -64,7 +88,7 @@ android {
 
     kotlinOptions {
         jvmTarget = "1.8"
-        freeCompilerArgs += ["-Xuse-experimental=kotlinx.coroutines.ExperimentalCoroutinesApi"]
+        freeCompilerArgs += ["-Xopt-in=kotlinx.coroutines.ExperimentalCoroutinesApi"]
     }
 
     signingConfigs {
@@ -77,10 +101,10 @@ android {
     }
 
     testOptions {
+        unitTests.returnDefaultValues = true
         unitTests.all {
             if (it.name == "testDebugUnitTest") {
                 kover {
-                    disabled = false
                     excludes = excludedFromCoverage
                 }
             } else if (it.name == "testReleaseUnitTest") {
